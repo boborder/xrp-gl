@@ -1,0 +1,14 @@
+services:
+  xrpgl:
+    build:
+      context: ./
+    container_name: xrpgl
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/xrpgl
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    restart: always
+    tty: true
+    command: sh -c "bun dev"
