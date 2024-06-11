@@ -1,0 +1,64 @@
+import { Hono } from "hono";
+import { bearerAuth } from "hono/bearer-auth";
+import { handle } from "hono/vercel";
+import { users } from "@/db/schema";
+import { D1Database } from "@cloudflare/workers-types";
+import { drizzle } from "drizzle-orm/d1";
+
+type Bindings = {
+  DB: D1Database;
+};
+
+const app = new Hono<{ Bindings: Bindings }>().basePath("/api");
+
+app.get("/get", async (c) => {
+  const db = drizzle(process.env.DB);
+  const results = await db.select().from(users).all();
+  return c.json(results);
+});
+
+app.get("/:account", bearerAuth({ token: "account" }), async (c) => {
+  const account = c.req.param("account");
+  const name = c.req.query("name");
+  c.header("X-Message", `${name}: ${account}`);
+  c.header("Content-Type", "application/json");
+
+  if (!account || name === undefined) {
+    return c.json({ error: "Name and id are required" }, 400);
+  }
+  const db = drizzle(process.env.DB);
+  try {
+    const result = await db
+      .insert(users)
+      .values({
+        name: name,
+        account: account,
+      })
+      .execute();
+    return c.json(result);
+  } catch (error) {
+    return c.json({ error: "Insert failed" }, 500);
+  }
+});
+
+app.post("/post", async (c) => {
+  const { name, account } = await c.req.json<typeof users.$inferSelect>();
+  const db = drizzle(process.env.DB);
+  try {
+    const result = await db
+      .insert(users)
+      .values({
+        name: name,
+        account: account,
+      })
+      .execute();
+    return c.json(result);
+  } catch (error) {
+    return c.json({ error: "Insert failed" }, 500);
+  }
+});
+
+export const POST = handle(app);
+export const GET = handle(app);
+
+export const runtime = "edge";

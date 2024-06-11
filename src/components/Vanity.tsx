@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react";
+import { useFormStatus, useFormState } from "react-dom";
+import { vanitySearch } from "@/actions/vanity";
 import { Wallet } from "xrpl";
 
 type VanityList = {
@@ -11,7 +13,7 @@ type VanityList = {
 export const Vanity = () => {
   const [vanity, setVanity] = useState<VanityList[]>([]);
   const [showSecrets, setShowSecrets] = useState<boolean[]>([false]);
-  const [loading, setLoading] = useState<boolean>();
+  const [loading, setLoading] = useState<boolean>(false);
 
   const vanitySearch = async (event: React.FormEvent<HTMLFormElement>) => {
     setLoading(true);
@@ -55,11 +57,19 @@ export const Vanity = () => {
   return (
     <div className="stat">
 
-      <label className="stat-title text-accent">
+      <label className="text-accent text-xl">
         Vanity Address
       </label>
 
-      <form onSubmit={vanitySearch} className="my-3 join join-vertical">
+      <form
+          onSubmit={vanitySearch}
+        // action={async (formData) => {
+        //   setLoading(true)
+        //   const account = await vanitySearch(formData)
+        //   setVanity(account as any)
+        //   setLoading(false)
+        // }}
+        className="my-3 join join-vertical">
         <input
           type="text"
           name="keyword"
@@ -68,7 +78,7 @@ export const Vanity = () => {
           className="input input-bordered w-full join-item"
           onChange={handleInputChange}
         />
-        <button className="btn btn-primary join-item">Search</button>
+        <button className="btn btn-primary join-item text-xl">Search</button>
       </form>
 
       {loading &&
@@ -82,11 +92,11 @@ export const Vanity = () => {
       {vanity && (
         <>
           {Array.isArray(vanity) && vanity.map((vanityList, index) => (
-            <dl className="stat-title truncate" key={index}>
+            <dl className="truncate" key={index}>
               <dt>Address:</dt>
-              <dd className="stat-desc text-success">{vanityList.address} </dd>
+              <dd className="text-success truncate">{vanityList.address} </dd>
               <dt>Secret: </dt>
-              <dd className="stat-desc text-success">{showSecrets[index] ? vanityList.secret : '***************'} </dd>
+              <dd className="text-success truncate">{showSecrets[index] ? vanityList.secret : '***************'} </dd>
               <label className="label cursor-pointer">
                 <span className="label-text mx-auto">show</span>
                 <input

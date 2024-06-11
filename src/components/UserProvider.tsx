@@ -2,71 +2,129 @@
 
 import { useState, useEffect, useContext, createContext } from "react";
 import { Xumm } from "xumm";
+import { hash } from '@/lib/hash';
+import { Client } from "xrpl";
 
 const xumm = new Xumm(process.env.XUMMAPI!, process.env.XUMMSECRET!);
 
-type UserInfoType = {
+type UserType = {
   account?: string;
   name?: string;
   domain?: string;
   picture?: string;
-  //   // email?: string;
-//   // networkEndpoint?: string;
-//   // networkType?: string;
-//   // source?: string;
-//   // kycApproved?: boolean;
-//   // token?: string;
+  networkEndpoint?: string;
+  networkType?: string;
+  source?: string;
+  kycApproved?: boolean;
+  token?: string;
+};
+
+export type UserProfile = {
+  account?: string;
+  age?: number;
+  avatar?: string;
+  bio?: string;
+  currency?: string;
+  country?: string;
+  did?: string;
+  email?: string;
+  gender?: string;
+  job?: string;
+  name?: string;
+  lang?: string;
+  locate?: string;
+  paystring?: string;
+  sns?: string;
+  tel?: string;
+  url?: string;
+  uuid?: string;
 };
 
 type UserContextType = {
-  userInfo: UserInfoType;
+  user: UserType;
   xumm: typeof xumm;
-  avatar?: string;
+  store?: UserProfile;
+  account: any;
+  gravatar?: string;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const [userInfo, setUserInfo] = useState({});
-  const [avatar, setAvatar] = useState<string | undefined>(undefined);
+  const [user, setUser] = useState({})
+  const [store, setStore] = useState<UserProfile | undefined>(undefined);
+  const [account, setAccount] = useState({});
+  const [gravatar, setGravatar] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const profile = xumm.user
-      const user = {
-        account: await profile.account,
-        name: await profile.name,
-        domain: await profile.domain,
-        picture: await profile.picture,
-        // email: await profile.email,
-        // networkEndpoint: await profile.networkEndpoint,
-        // networkType: await profile.networkType,
-        // source: await profile.source,
-        // kycApproved: await profile.kycApproved,
-        // token: await profile.token
-      };
-      setUserInfo(user);
-
-      if (user.account) {
-        const response = await fetch("/api/info", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ account: user.account })
-        });
-
-        const data = await response.json();
-        const avatar = data.account_data.urlgravatar?.replace("http", "https");
-
-        setAvatar(`${avatar}?s=300`)
-      }
-    };
-    fetchData();
+    getUser()
   }, []);
 
+  const getUser = async () => {
+    const user = xumm.user
+    const userData = {
+      account: await user.account,
+      name: await user.name,
+      domain: await user.domain,
+      picture: await user.picture,
+      networkEndpoint: await user.networkEndpoint,
+      networkType: await user.networkType,
+      source: await user.source,
+      kycApproved: await user.kycApproved,
+      token: await user.token
+    };
+    setUser(userData);
+
+    const id = await hash(userData.account)
+    const getUser = await xumm.userstore?.get(id)
+    setStore(getUser)
+
+    const ws = `${userData.networkEndpoint || "wss://xrplcluster.com"}`
+    const client = new Client(ws);
+    await client.connect();
+
+    const info = await client.request({
+      command: "account_info",
+      account: userData.account!,
+    });
+    const data: any = info.result
+
+    const tx = await client.request({
+      command: "account_tx",
+      account: userData.account!,
+      ledger_index_min: -1,
+      ledger_index_max: -1,
+    });
+    const txData: any = tx.result
+
+    const obj = await client.request({
+      command: "account_objects",
+      account: userData.account!,
+    });
+    const objData: any = obj.result
+
+    // const json = { method: "account_info", params: [{ account: userData.account }] };
+    // const info = await fetch(`${userData.networkEndpoint?.replace("wss", "https").replace("51233", "51234") || "https://xrplcluster.com"}`, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify(json),
+    // });
+
+    // const data = await info.json();
+    setAccount(data)
+    await client.disconnect()
+
+    const gravatar = data.account_data?.urlgravatar;
+    if (gravatar) {
+      setGravatar(`${gravatar.replace("http", "https")}?s=256`)
+    }
+
+  }
+
   return (
-    <UserContext.Provider value={{ userInfo, xumm, avatar }}>
+    <UserContext.Provider value={{ user, xumm, store, account, gravatar }}>
       {children}
     </UserContext.Provider>
   )

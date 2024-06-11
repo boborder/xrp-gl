@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 
 module.exports = {
-  output: "standalone",
   images: {
     loader: "custom",
     unoptimized: true,
@@ -10,9 +9,9 @@ module.exports = {
     XUMMAPI: process.env.XUMMAPI,
     XUMMSECRET: process.env.XUMMSECRET,
     DATABASE_URL: process.env.DATABASE_URL,
-    PINATA_API_KEY: process.env.PINATA_API_KEY,
-    PINATA_API_SECRET: process.env.PINATA_API_SECRET,
     PINATA_JWT: process.env.PINATA_JWT,
+    TOKEN: process.env.TOKEN,
+    SEED: process.env.SEED,
   },
   async rewrites() {
     const gateway = "https://ipfs.io/ipfs/";
@@ -27,6 +26,5 @@ module.exports = {
   },
   experimental: {
     typedRoutes: true,
-    serverActions: true,
   },
 };

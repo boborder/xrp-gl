@@ -10,14 +10,16 @@ export default function Error() {
                 Please contact us for{ }
                 <Link href={'/'} className='text-error hover:underline'>
                     help &rarr;
+                </Link>
+                <div className="p-4">
                     <Imag
                         src={"/ipfs/bg.png"}
                         width={360}
-                        height={240}
-                        alt="logo"
-                        className="w-full"
+                        height={360}
+                        alt="error"
+                        className="m-4"
                     />
-                </Link>
+                </div>
             </div>
         </div>
     );

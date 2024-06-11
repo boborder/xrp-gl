@@ -1,20 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
 
-export async function POST(req: NextRequest) {
+const app = new Hono().basePath("/api/info");
+
+app.post("/", async (c) => {
+  const req = await c.req.json();
+  const account = req.account;
+  const network = req.network?.replace("wss", "https").replace("51233", "51234");
+  const json = { method: "account_info", params: [{ account: account }] };
+
   try {
-    const request = await req.json();
-    if (!request || Object.keys(request).length === 0 || !request.account) {
-      return NextResponse.json({
-        status: 400,
-        message: "Bad Request: Empty or Invalid Request",
-      });
-    }
-
-    const account = await request.account;
-    const json = { method: "account_info", params: [{ account: account }] };
-
-    const response = await fetch("https://xrplcluster.com", {
-    // const check = await fetch("http://localhost:5005", {
+    const info = await fetch(`${network || "https://xrplcluster.com"}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -22,15 +18,13 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(json),
     });
 
-    const info = await response.json();
-    console.log(info.result.status);
-
-    return NextResponse.json(info.result);
-
+    const data: any = await info.json();
+    console.log(data.result.status);
+    return c.json(data.result);
   } catch (error) {
-    console.error("An error occurred:", error);
-    return NextResponse.json({ status: 500, message: "Internal Server Error" });
+    return c.json({ error: "Internal Server Error" }, 500);
   }
-}
+});
+export const POST = handle(app);
 
 export const runtime = "edge";

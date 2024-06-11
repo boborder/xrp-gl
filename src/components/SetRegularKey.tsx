@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
-import { convertStringToHex } from "xrpl";
 import { createPayload } from "@/lib/payload";
+import { convertStringToHex } from 'xrpl';
 
-export const Donate = () => {
+export const SetRegularKey = () => {
   const { xumm, user } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
@@ -22,24 +22,31 @@ export const Donate = () => {
     }, 10000);
   };
 
-    const donate = async () => {
+  const setRegularKey = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const setkey = event.currentTarget.key.value;
+    const keyhex = convertStringToHex(setkey)
     const payload = await createPayload({
-      TransactionType: 'Payment',
-      Destination: "rQqqqqJyn6sKBzByJynmEK3psndQeoWdP",
-      // Amount: String(123_456_789),
-      Memos: [
-        {
-          Memo: {
-            MemoData: convertStringToHex("Donate"),
-            MemoFormat: "746578742F706C61696E",
-            MemoType: convertStringToHex("Payment")
-          }
-        },
-      ],
+      // Flags: 0,
+      TransactionType: 'SetRegularKey',
+      // Account: user.account,
+      RegularKey: setkey,
+      // RegularKey: keyhex
     });
     setQr(payload.qr)
     handlePayloadStatus(payload.uuid)
-  };
+  }
+
+  const setBlackHole = async () => {
+    const payload = await createPayload({
+            // Flags: 0,
+      TransactionType: 'SetRegularKey',
+          // Account: user.account,
+      RegularKey: 'rrrrrrrrrrrrrrrrrrrrBZbvji',
+    });
+    setQr(payload.qr)
+    handlePayloadStatus(payload.uuid)
+  }
 
   return (
     <>
@@ -48,7 +55,7 @@ export const Donate = () => {
           {qr || tx ? (
             <>
               {qr &&
-                <div className="stat">
+                <div className="stat xs:w-64">
                   <Imag
                     src={qr}
                     alt="QR"
@@ -60,8 +67,8 @@ export const Donate = () => {
               }
 
               {tx &&
-                <div className="stat">
-                  <details className="collapse collapse-arrow border border-base-300 bg-base-100">
+                <div className="stat xs:w-64">
+                  <details className="stat-desc collapse collapse-arrow border border-base-300 bg-base-100">
                     <summary className="collapse-title text-accent">
                       {tx.response.resolved_at}
                     </summary>
@@ -76,15 +83,25 @@ export const Donate = () => {
             </>
           ) : (
             <div className="stat">
-              <div className="text-accent text-xl">Donate</div>
-              <button onClick={donate} className="mx-auto my-3">
-                <Imag
-                  src={"/ipfs/donate-with-xumm.png"}
-                  width={240}
-                  height={100}
-                  alt="sign"
+              <label className="text-accent text-xl">
+                RegularKey Set
+              </label>
+              <form onSubmit={setRegularKey} className="my-3 join join-vertical">
+                <input
+                  type="text"
+                  name="key"
+                  id="key"
+                  placeholder="address(r...)"
+                  className="input input-bordered w-full join-item"
                 />
-              </button>
+                <button className="text-xl btn btn-primary join-item">setRegularKey</button>
+                <button
+                  type="button"
+                  onClick={setBlackHole}
+                  className="text-xl btn btn-secondary join-item">
+                  BlackHole
+                </button>
+              </form>
             </div>
           )}
         </>

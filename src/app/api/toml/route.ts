@@ -1,30 +1,26 @@
 import toml from "toml";
-import { NextRequest, NextResponse } from "next/server";
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
 
-export const runtime = "edge";
+const app = new Hono().basePath("/api/toml");
 
-export async function POST(req: NextRequest) {
+app.post("/", async (c) => {
+  const Request = await c.req.json();
+  if (!Request || Object.keys(Request).length === 0 || !Request.domain) {
+    return c.json({ message: "Bad Request: Empty or Invalid Request" }, 400);
+  }
+  const domain = await Request.domain;
+
   try {
-    const Request = await req.json();
-    if (!Request || Object.keys(Request).length === 0 || !Request.domain) {
-      return NextResponse.json({
-        status: 400,
-        message: "Bad Request: Empty or Invalid Request",
-      });
-    }
-
-    const domain = await Request.domain;
-
     const check = fetch(`https://${domain}/.well-known/xrp-ledger.toml`);
     const text = await (await check).text();
     const json = toml.parse(text);
-    // console.log(json)
 
-    return NextResponse.json({ account: json["ACCOUNTS"] });
-    
+    return c.json({ account: json["ACCOUNTS"] });
   } catch (error) {
-    console.error("An error occurred:", error);
-    // Return a 500 Internal Server Error response
-    return NextResponse.json({ status: 500, message: "Internal Server Error" });
+    return c.json({ error: "Internal Server Error" }, 500);
   }
-}
+});
+export const POST = handle(app);
+
+export const runtime = "edge";

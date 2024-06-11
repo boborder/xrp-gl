@@ -1,8 +1,8 @@
 "use client"
 
+import { checkDomain, checkToml } from "@/actions/domain";
 import { useState } from "react";
 import { convertHexToString } from "xrpl";
-
 interface TomlResponse {
     account: Array<{
         address: string;
@@ -11,9 +11,10 @@ interface TomlResponse {
 }
 
 export const Domain = () => {
-    const [toml, settToml] = useState<TomlResponse | null>(null);
-    const [domain, setDomain] = useState<string | null>(null);
+    const [toml, setToml] = useState<TomlResponse | undefined>(undefined);
+    const [domain, setDomain] = useState<string | undefined>(undefined);
     const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState("");
 
     const checkToml = async (event: React.FormEvent<HTMLFormElement>) => {
         setLoading(true);
@@ -30,9 +31,9 @@ export const Domain = () => {
                 body: JSON.stringify({ domain: domain }),
             });
 
-            const data = await response.json();
-            settToml(data);
-
+            const data: any = await response.json();
+            setToml(data);
+            if (!toml) { setMessage("NotFound File /.well-known/xrp-ledger.toml") }
         } catch (error) {
             console.log(error)
         } finally {
@@ -56,11 +57,11 @@ export const Domain = () => {
                 body: JSON.stringify({ account: address })
             });
 
-            const data = await response.json();
+            const data: any = await response.json();
 
             const domain = convertHexToString(data.account_data.Domain);
             setDomain(domain);
-
+            if (!domain) { setMessage("NotFound Domain") }
         } catch (error) {
             console.log(error)
         } finally {
@@ -70,10 +71,19 @@ export const Domain = () => {
 
     return (
         <div className="stat">
-            <label className="stat-title text-accent">
+            <label className="text-accent text-xl">
                 Check Domain
             </label>
-            <form onSubmit={checkToml} className="my-3 join join-vertical">
+            <form
+                onSubmit={checkToml}
+                // action={async (formData) => {
+                //     setLoading(true)
+                //     const toml = await checkToml(formData)
+                //     setToml(toml)
+                //     if (!toml) {setMessage("NotFound File /.well-known/xrp-ledger.toml")}
+                //     setLoading(false)
+                // }}
+                className="my-3 join join-vertical">
                 <input
                     type="text"
                     name="domain"
@@ -81,18 +91,40 @@ export const Domain = () => {
                     placeholder="example.com"
                     className="input input-bordered w-full join-item"
                 />
-                <button className="stat-actions btn btn-primary join-item">Check toml ?</button>
+                <button className="text-xl btn btn-primary join-item">toml ?</button>
             </form>
-            <form onSubmit={checkDomain} className="my-3 join join-vertical">
+            <form
+                onSubmit={checkDomain}
+                // action={async (formData) => {
+                //     setLoading(true)
+                //     const data = await checkDomain(formData)
+                //     const domain = convertHexToString(data)
+                //     setDomain(domain)
+                //     if (!toml) {setMessage("NotFound Domain")}
+                //     setLoading(false)
+                // }}
+                className="my-3 join join-vertical">
                 <input
                     type="text"
                     name="address"
                     id="address"
-                    placeholder="r..."
+                    placeholder="address(r...)"
                     className="input input-bordered w-full join-item"
                 />
-                <button className="btn btn-primary join-item">Domain ?</button>
+                <button className="text-xl btn btn-primary join-item">Domain ?</button>
             </form>
+            {loading && (
+                <div className="stat-value">
+                    <span className="loading loading-infinity loading-lg"></span>
+                    <span className="loading loading-infinity loading-lg"></span>
+                    <span className="loading loading-infinity loading-lg"></span>
+                </div>
+            )}
+
+            {domain && (<>
+                <span>domain: </span>
+                <p className="text-success">{domain} </p>
+            </>)}
 
             {toml?.account && Array.isArray(toml.account) ? (
                 <div className="text-left">
@@ -106,21 +138,9 @@ export const Domain = () => {
                     ))}
                 </div>
             ) : (
-                <div className="text-xs">NotFound File<br />xrp-ledger.toml</div>
+                <div className="text-xs">{message}</div>
             )}
 
-            {domain && (<>
-                <span>domain: </span>
-                <p className="text-success">{domain} </p>
-            </>)}
-
-            {loading && (
-                <div className="stat-value">
-                    <span className="loading loading-infinity loading-lg"></span>
-                    <span className="loading loading-infinity loading-lg"></span>
-                    <span className="loading loading-infinity loading-lg"></span>
-                </div>
-            )}
         </div>
     );
 }

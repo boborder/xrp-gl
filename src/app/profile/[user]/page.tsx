@@ -9,20 +9,20 @@ export const runtime = 'edge';
 export default function Profile() {
     const router = useRouter();
     const pathname = usePathname();
-    const { userInfo } = useUser();
+    const { user } = useUser();
 
     useEffect(() => {
         // userInfoのアカウントが存在し、現在のpathnameとaccountが異なる場合、URLを置き換える
-        if (userInfo.account && `/profile/${userInfo.account}` !== pathname) {
-            router.replace(`/profile/${userInfo.account}`);
+        if (user.account && `/profile/${user.account}` !== pathname) {
+            router.replace(`/profile/${user.account}`);
         }
         // アカウントが未定義の場合、ホームにリダイレクトする
-        else if (userInfo.account === undefined) {
+        else if (user.account === undefined) {
             router.replace("/")
         }
-    }, [userInfo.account]);
+    }, [user.account]);
 
     return (
-        <>{userInfo.account ? <EditProfile /> : null}</>
+        <>{user.account ? <EditProfile /> : null}</>
     )
 }

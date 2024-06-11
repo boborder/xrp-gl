@@ -1,58 +1,51 @@
 "use client"
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import AvatarEditor from 'react-avatar-editor';
 import { Imag } from "@/components/Imag"
-import { useUser } from "@/components/UserProvider"
-
-type UserProfile = {
-    avatar?: string;
-    name?: string;
-    email?: string;
-    bio?: string;
-    paystring?: string;
-    url?: string;
-    did?: string;
-    tel?: string;
-};
+import { UserProfile, useUser } from "@/components/UserProvider"
+import { DID } from './DID';
+import { hash } from '@/lib/hash';
+import { useRouter } from 'next/navigation';
 
 export const EditProfile = () => {
-    const { xumm, userInfo, avatar } = useUser();
-    const { register, handleSubmit, watch, setValue } = useForm<UserProfile>({
+    const { xumm, user, gravatar, store, account } = useUser();
+
+    const { setError, register, handleSubmit, watch, setValue } = useForm<UserProfile>({
         defaultValues: {
-            avatar: avatar || userInfo.picture,
-            name: "",
-            email: "",
-            bio: "",
-            paystring: "",
-            url: "",
-            did: "",
-            tel: "",
+            account: user.account,
+            avatar: store?.avatar || gravatar || user.picture,
+            name: store?.name || user.name,
+            url: store?.url || (user.domain ? "https://" + user?.domain : undefined),
+            did: store?.did || ("did:xrpl:" + user?.account),
+            uuid: store?.uuid || crypto.randomUUID(),
+            email: store?.email,
+            bio: store?.bio,
+            paystring: store?.paystring,
+            tel: store?.tel,
+            gender: store?.gender,
+            age: store?.age,
+            locate: store?.locate,
+            currency: store?.currency,
+            lang: store?.lang,
+            sns: store?.sns,
+            job: store?.job,
+            country: store?.country
         }
     });
-
     const [isEditing, setIsEditing] = useState(false);
     // const [liked, setLiked] = useState(false);
     // const [favorited, setFavorited] = useState(false);
     const [scale, setScale] = useState(1);
     const editorRef = useRef<AvatarEditor | null>(null);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            const userstoreGet = await xumm.userstore?.get("user");
-            if (userstoreGet && userstoreGet.data && userstoreGet.data.user) {
-                const user = userstoreGet.data.user;
-                Object.keys(user).forEach(key => {
-                    setValue(key as keyof UserProfile, user[key]);
-                });
-            }
-        };
-        fetchData();
-    }, [xumm, setValue]);
+    const router = useRouter()
 
     const onSubmit = async (data: UserProfile) => {
-        await xumm.userstore?.set("user", data);
+        const id = await hash(user.account)
+        await xumm.userstore?.set(id, data);
         setIsEditing(false)
+
+        router.refresh()
     };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,12 +59,34 @@ export const EditProfile = () => {
         }
     };
 
-    const handleSaveAvatar = () => {
+    const handleSaveAvatar = async () => {
         if (editorRef.current) {
             const canvas = editorRef.current.getImage();
             const canvasDataURL = canvas.toDataURL();
-            setValue('avatar', canvasDataURL);
-            setScale(1);
+
+            // IPFSに画像をアップロード
+            const blob = await (await fetch(canvasDataURL)).blob();
+            const file = new File([blob], 'avatar.png', { type: 'image/png' });
+            const data = new FormData();
+            data.append("file", file);
+
+            try {
+                const res = await fetch("/api/pinata", {
+                    method: "POST",
+                    body: data,
+                });
+
+                const cid = await res.json();
+                if (res.status === 200) {
+                    setValue("avatar", `https://ipfs.io/ipfs/${cid}`);
+                    await onSubmit(watch());
+                } else {
+                    throw new Error("Failed to upload to IPFS");
+                }
+                setScale(1)
+            } catch (error) {
+                console.error("Upload error:", error);
+            }
         }
     };
 
@@ -92,11 +107,11 @@ export const EditProfile = () => {
     };
 
     return (
-        <div className='card-body text-accent shadow-xl'>
+        <div className='text-accent shadow-xl'>
 
             {/* プロフィール編集画面 */}
             {isEditing ? (
-                <form onSubmit={handleSubmit(onSubmit)} className="p-3">
+                <form onSubmit={handleSubmit(onSubmit)} className="p-2 px-8">
 
                     <h2 className="text-3xl">Edit</h2>
                     <div className="form-control">
@@ -107,6 +122,39 @@ export const EditProfile = () => {
                             className="input input-bordered"
                             type="text"
                             {...register('name')}
+                        />
+                    </div>
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text">Locate</span>
+                        </label>
+                        <input
+                            className="input input-bordered"
+                            type="text"
+                            placeholder='Asia/Tokyo'
+                            {...register('locate')}
+                        />
+                    </div>
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text">Lang</span>
+                        </label>
+                        <input
+                            className="input input-bordered"
+                            type="text"
+                            placeholder='Japanese'
+                            {...register('lang')}
+                        />
+                    </div>
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text">Currency</span>
+                        </label>
+                        <input
+                            className="input input-bordered"
+                            type="text"
+                            placeholder='JPY'
+                            {...register('currency')}
                         />
                     </div>
                     <div className="form-control">
@@ -144,6 +192,44 @@ export const EditProfile = () => {
                     </div>
                     <div className="form-control">
                         <label className="label">
+                            <span className="label-text">SNS</span>
+                        </label>
+                        <input
+                            className="input input-bordered"
+                            type="text"
+                            placeholder='x.com/name'
+                            {...register('sns')}
+                        />
+                    </div>
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text">Age</span>
+                        </label>
+                        <input
+                            className="input input-bordered"
+                            type="number"
+                            {...register('age')}
+                        />
+                    </div>
+                        <label className="label">
+                            <span className="label-text">Gender</span>
+                        </label>
+                    <div className="input input-bordered flex justify-between">
+                        <label className="label cursor-pointer">
+                            <span className="label-text">female</span>
+                            <input type="radio" value="female" id="female" className="radio checked:bg-red-500" checked   {...register('gender')} />
+                        </label>
+                        <label className="label cursor-pointer">
+                            <span className="label-text">male</span>
+                            <input type="radio" value="male" id="male" className="radio checked:bg-blue-500" checked   {...register('gender')} />
+                        </label>
+                        <label className="label cursor-pointer">
+                            <span className="label-text">none</span>
+                            <input type="radio" value={undefined} id="none" className="radio checked:bg-gray-500" checked   {...register('gender')} />
+                        </label>
+                    </div>
+                    <div className="form-control">
+                        <label className="label">
                             <span className="label-text">Bio</span>
                         </label>
                         <textarea
@@ -151,16 +237,38 @@ export const EditProfile = () => {
                             {...register('bio')}
                         />
                     </div>
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text">Country</span>
+                        </label>
+                        <input
+                            className="input input-bordered"
+                            type="text"
+                            placeholder='Japan'
+                            {...register('country')}
+                        />
+                    </div>
+                    <div className="form-control">
+                        <label className="label">
+                            <span className="label-text">Job</span>
+                        </label>
+                        <input
+                            className="input input-bordered"
+                            type="text"
+                            placeholder='Engineer'
+                            {...register('job')}
+                        />
+                    </div>
                     <div className="form-control my-3 btn-group btn-group-vertical">
                         <button
-                            className="btn btn-primary"
+                            className="text-xl btn btn-primary"
                         >
                             Save Changes
                         </button>
                         <button
                             type="button"
                             onClick={() => setIsEditing(false)}
-                            className="btn btn-ghost border-secondary"
+                            className="text-xl btn btn-ghost border-secondary"
                         >
                             Cancel
                         </button>
@@ -170,7 +278,7 @@ export const EditProfile = () => {
             ) : (
                 // ... プレビュー表示 ...
                 <>
-                    <h1 className='text-3xl'>Profile</h1>
+                    <h1 className='mt-2 text-3xl'>Profile</h1>
 
                     {/* <div className='m-1 h-8'>
                         <label tabIndex={0} className="btn btn-ghost rounded-btn swap swap-flip btn-sm text-2xl">
@@ -186,57 +294,76 @@ export const EditProfile = () => {
                     </div> */}
 
                     <div
-                        onClick={() => { (window as any).my_modal_2.showModal(); handleSaveAvatar(); }}
-                        className='avatar w-52 mx-auto my-3 p-3'>
+                        onClick={() => { (window as any).my_modal_2.showModal(); }}
+                        className='avatar w-64 mx-auto my-3 p-3'>
                         <Imag
-                            priority={false}
+                            priority={true}
                             src={watch("avatar") || '/ipfs/avatar.png'}
                             alt="avatar"
-                            width={300}
-                            height={300}
+                            width={256}
+                            height={256}
                         />
+                    </div>
+                    <div className='text-lg truncate'>
+                        {(account.account_data?.Balance / 1000000) || ""} XRP
                     </div>
                     <div className="flex items-center justify-center">
                         <div id="account" className="truncate">
-                            {userInfo.account}
+                            {user.account}
                         </div>
-                        <button className="btn-xs hover:bg-accent w-26 cursor-copy" onClick={() => {
-                            const content = document.getElementById('account')?.textContent;
-                            if (content) { copyToClickBoard(content); }
-                        }}>Copy
+                        <button
+                            className="btn-xs hover:bg-accent w-26 cursor-copy"
+                            onClick={() => {
+                                const content = document.getElementById('account')?.textContent;
+                                if (content) { copyToClickBoard(content); }
+                            }}>Copy
                         </button>
                     </div>
+                    <div >
+                        {user.networkEndpoint}
+                    </div>
 
-                    {userInfo && Object.entries(userInfo).map(([key, value]) => {
-                        if (key === 'account' || key === 'picture') {
-                            return null;
-                        }
-                        if (typeof value === 'object' && value !== null) {
-                            return Object.entries(value).map(([subKey, subValue]) => {
-                                if (subKey === 'account' || subKey === 'picture') {
-                                    return null;
-                                }
-                                return <p key={subKey}>{subValue as string}</p>
-                            });
-                        } else {
-                            return <p key={key}>{value}</p>;
-                        }
-                    })}
-
-                    <br />
-                    <p>{watch("name")}</p>
-                    <a href={watch("url")} className="block underline">{formatUrlForDisplay(watch("url"))}</a>
-                    <p>{watch("email")}</p>
-                    <p>{watch("tel")}</p>
-                    <p>{watch("did")}</p>
-                    <p>{watch("bio")}</p>
+                    <div className='text-left m-4 p-4 border-2 border-primary rounded-box overflow-scroll whitespace-nowrap'>
+                        <p>{watch("name") && "name: "}{watch("name")}</p>
+                        <p className='block'>{watch("url") && "url: "}
+                            <a href={watch("url")} className="underline">{formatUrlForDisplay(watch("url"))}</a>
+                        </p>
+                        <p>{watch("locate") && "locate: "}{watch("locate")}</p>
+                        <p>{watch("lang") && "lang: "}{watch("lang")}</p>
+                        <p>{watch("currency") && "currency: "}{watch("currency")}</p>
+                        <p>{watch("email") && "email: "}{watch("email")}</p>
+                        <p>{watch("tel") && "tel: "}{watch("tel")}</p>
+                        <p>{watch("sns") && "sns: "}{watch("sns")}</p>
+                        <p>{watch("gender") && "gender: "}{watch("gender")}</p>
+                        <p>{watch("age") && "age: "}{watch("age")}</p>
+                        <p>{watch("bio") && "bio: "}{watch("bio")}</p>
+                        <p>{watch("did") && "did: "}{watch("did")}</p>
+                        <p>{watch("country") && "country: "}{watch("country")}</p>
+                        <p>{watch("job") && "did: "}{watch("job")}</p>
+                        <p>{watch("uuid") && "uuid: "}{watch("uuid")}</p>
+                    </div>
 
                     <button
-                        className="btn btn-primary my-3 mx-auto"
+                        className="md:btn-lg text-xl btn btn-primary mx-auto w-80"
                         onClick={() => setIsEditing(true)}
                     >
-                        Edit
+                        Edit Profile
                     </button>
+
+                    <DID profile={watch()} />
+
+                    <div className="stat">
+                        <details className="collapse collapse-arrow border border-primary bg-base-100">
+                            <summary className="collapse-title text-2xl">
+                                Account Info
+                            </summary>
+                            <div className="collapse-content text-left">
+                                <pre className="text-success text-xs overflow-scroll">
+                                    account_info: {JSON.stringify(account, null, 2)}
+                                </pre>
+                            </div>
+                        </details>
+                    </div>
                 </>
             )}
             {/* アバター編集モーダル */}
@@ -264,8 +391,8 @@ export const EditProfile = () => {
                         type="range"
                         value={scale}
                         min="0.5"
-                        max="1.5"
-                        step="0.01"
+                        max="2"
+                        step="0.02"
                         onChange={(e) => setScale(parseFloat(e.target.value))}
                         className="w-[80%] my-3"
                     />
@@ -284,7 +411,7 @@ export const EditProfile = () => {
                     <button>Close</button>
                 </form>
             </dialog>
-        </div>
 
+        </div>
     )
 }

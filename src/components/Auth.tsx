@@ -4,12 +4,13 @@ import { Imag } from "@/components/Imag"
 import { useUser } from "@/components/UserProvider"
 
 export const Auth = () => {
-    const { userInfo, xumm, avatar } = useUser();
+    const { user, xumm, store, gravatar, } = useUser();
     const router = useRouter();
 
     const connect = async () => {
         try {
             await xumm.authorize();
+            router.replace(`/profile/${user.account}`)
             router.refresh()
         } catch (error) {
             console.error("Error during connection:", error);
@@ -26,14 +27,14 @@ export const Auth = () => {
     };
 
     return (
-        userInfo?.account ? (
+        user?.account ? (
             <nav className="dropdown dropdown-end dropdown-hover">
                 <button tabIndex={0} className="btn btn-ghost btn-circle avatar">
                     <div className='round-full w-12'>
                         <Imag
-                            priority={false}
-                            src={avatar || userInfo.picture || "/ipfs/avatar.png"}
-                            alt="Avatar"
+                            priority={true}
+                            src={store?.avatar || gravatar || user.picture || "/ipfs/avatar.png"}
+                            alt="avatar"
                             width={50} height={50}
                         />
                     </div>
@@ -48,7 +49,7 @@ export const Auth = () => {
                         </a>
                     </li>
                     <li>
-                        <a onMouseDown={() => router.push(`/profile/${userInfo.account}`)}>
+                        <a onMouseDown={() => router.push(`/profile/${user.account}`)}>
                             <button className="btn btn-xs hover:text-primary">Profile</button>
                             <span className="badge">🏴‍☠️</span>
                         </a>

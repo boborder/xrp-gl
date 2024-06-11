@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
+import { useRouter } from "next/navigation";
+import { createPayload } from "@/lib/payload";
 
 export const Payload = () => {
-  const { xumm, userInfo } = useUser();
+  const { xumm, user, account } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
+  const router = useRouter()
 
   const handlePayloadStatus = async (payload?: any) => {
     const checkPayloadStatus = setInterval(async () => {
@@ -20,47 +23,31 @@ export const Payload = () => {
     }, 10000);
   };
 
-  const push = async (payload?: any) => {
-    const message = payload?.pushed
-      ? `Payload '${payload?.uuid}' pushed to your phone.`
-      : "Payload not pushed, opening payload...";
-    alert(message);
-    if (!payload?.pushed) {
-      window.open(payload?.next.always);
-    }
-  };
-
-  const createPayload = async (Payload: any) => {
-    setTx(undefined);
-    const payload = await xumm.payload?.create({
-      ...Payload,
-      // Fee: 123,
+  const payload = async () => {
+    const payload = await createPayload({
+      TransactionType: 'SignIn'
     });
-    await xumm.xapp?.openSignRequest(payload);
-    setQr(payload?.refs.qr_png);
-    push(payload);
-    handlePayloadStatus(payload);
-  };
-
-  const Payment = async () => {
-    await createPayload({
-      TransactionType: 'Payment',
-      Destination: "rQqqqqJyn6sKBzByJynmEK3psndQeoWdP",
-    });
+    handlePayloadStatus(payload.uuid);
+    setQr(payload.qr);
   };
 
   const Signin = async () => {
     await xumm.authorize();
+    router.replace(`/profile/${user.account}`)
   };
 
+  const logout = async () => {
+    await xumm.logout();
+    router.push("/")
+  };
   return (
     <>
-      {userInfo.account ? (
+      {user.account ? (
         <>
           {qr || tx ? (
             <>
               {qr &&
-                <div className="stat xs:w-64">
+                <div className="stat">
                   <Imag
                     src={qr}
                     alt="QR"
@@ -72,8 +59,8 @@ export const Payload = () => {
               }
 
               {tx &&
-                <div className="stat xs:w-64">
-                  <details className="stat-desc collapse collapse-arrow border border-base-300 bg-base-100">
+                <div className="stat">
+                  <details className="collapse collapse-arrow border border-base-300 bg-base-100">
                     <summary className="collapse-title text-accent">
                       {tx.response.resolved_at}
                     </summary>
@@ -87,26 +74,48 @@ export const Payload = () => {
               }
             </>
           ) : (
-            <div className="stat">
-              <div className="stat-title text-accent">Pay</div>
-              <button onClick={Payment} className="mx-auto">
-                <Imag
-                  src={"/ipfs/pay-with-xumm.png"}
-                  width={350}
-                  height={100}
-                  alt="sign"
-                />
-              </button>
-            </div>
+            <>
+              <div className="stat">
+
+                <div className="text-accent text-xl">Sign</div>
+                <button onClick={payload} className="mx-auto min-w-56 my-3">
+                  <Imag
+                    src={"/ipfs/sign-in-with-xumm.png"}
+                    width={360}
+                    height={100}
+                    alt="sign"
+                  />
+                </button>
+
+                {account && (
+                  <details className="my-3 collapse collapse-arrow border border-primary bg-base-100">
+                    <summary className="collapse-title text-accent text-xl">
+                      Account Info
+                    </summary>
+                    <div className="collapse-content text-left">
+                      <pre className="text-success text-xs overflow-scroll">
+                        result: {JSON.stringify(account, null, 2)}
+                      </pre>
+                    </div>
+                  </details>
+                )}
+
+                <div className="text-accent text-xl">Logout</div>
+                <button className="text-xl btn btn-primary mx-auto min-w-52 my-3" onClick={logout}>
+                  logout
+                </button>
+
+              </div>
+            </>
           )}
         </>
       ) : (
         <div className="stat">
-          <div className="stat-title text-accent">Sign In</div>
-          <div onClick={Signin} className="mx-auto">
+          <div className="text-accent text-xl">Sign In</div>
+          <div onClick={Signin} className="mx-auto min-w-56 my-3">
             <Imag
               src={"/ipfs/sign-in-with-xumm.png"}
-              width={350}
+              width={360}
               height={100}
               alt="sign"
             />

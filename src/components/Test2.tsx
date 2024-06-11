@@ -63,7 +63,7 @@ export function Test2() {
     return (
         <>
             <div className="stat text-center">
-                <label className='stat-title text-4xl text-accent mb-4'>
+                <label className='text-4xl text-accent mb-4'>
                     TEST
                 </label>
                 {status}
@@ -77,7 +77,7 @@ export function Test2() {
             <div className="stats stats-vertical md:stats-horizontal">
                 {aliceWallet &&
                     <div className='stat'>
-                        <label className='stat-title'>Alice</label>
+                        <label>Alice</label>
                         <div className="my-4 truncate text-accent">
                             Address: {aliceWallet?.address}
                             <br />
@@ -97,7 +97,7 @@ export function Test2() {
                 }
                 {bobWallet &&
                     <div className='stat'>
-                        <label className='stat-title'>Bob</label>
+                        <label>Bob</label>
                         <div className="my-4 truncate text-accent">
                             Address: {bobWallet?.address}
                             <br />

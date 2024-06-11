@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
+import { createPayload } from '../lib/payload';
 
 export const Multisign = () => {
-  const { xumm, userInfo } = useUser();
+  const { xumm, user } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
 
@@ -18,28 +19,6 @@ export const Multisign = () => {
         setQr(undefined);
       }
     }, 10000);
-  };
-
-  const push = async (payload?: any) => {
-    const message = payload?.pushed
-      ? `Payload '${payload?.uuid}' pushed to your phone.`
-      : "Payload not pushed, opening payload...";
-    alert(message);
-    if (!payload?.pushed) {
-      window.open(payload?.next.always);
-    }
-  };
-
-  const createPayload = async (Payload: any) => {
-    setTx(undefined);
-    const payload = await xumm.payload?.create({
-      ...Payload,
-      // Fee: 123,
-    });
-    await xumm.xapp?.openSignRequest(payload);
-    setQr(payload?.refs.qr_png);
-    push(payload);
-    handlePayloadStatus(payload);
   };
 
   const Multisign = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -60,11 +39,15 @@ export const Multisign = () => {
     }
 
     if (signerEntries.length > 0) {
-      await createPayload({
+      const payload = await createPayload({
+        // Flags: 0,
         TransactionType: 'SignerListSet',
+        // Account: user.account,
         SignerQuorum: 2,
         SignerEntries: signerEntries,
-      });
+      })
+      setQr(payload.qr)
+      handlePayloadStatus(payload.uuid);
     } else {
       console.log("有効なアドレスが提供されていません。");
     }
@@ -72,12 +55,12 @@ export const Multisign = () => {
 
   return (
     <>
-      {userInfo.account && (
+      {user.account && (
         <>
           {qr || tx ? (
             <>
               {qr &&
-                <div className="stat xs:w-64">
+                <div className="stat">
                   <Imag
                     src={qr}
                     alt="QR"
@@ -89,7 +72,7 @@ export const Multisign = () => {
               }
 
               {tx &&
-                <div className="stat xs:w-64">
+                <div className="stat">
                   <details className="stat-desc collapse collapse-arrow border border-base-300 bg-base-100">
                     <summary className="collapse-title text-accent">
                       {tx.response.resolved_at}

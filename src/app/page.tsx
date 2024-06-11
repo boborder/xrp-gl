@@ -1,12 +1,11 @@
 import { FetchData } from "@/components/FetchData";
 import { AccountSet } from "@/components/AccountSet";
-import { DID } from "@/components/DID";
-import { Multisign } from "@/components/Multisign";
+import { SetRegularKey } from "@/components/SetRegularKey";
 import { Payload } from "@/components/Payload";
-import { NFT } from "@/components/NFT";
-import { AddressCheck } from "@/components/AddressCheck";
+import { GetName } from "@/components/GetName";
 import { Domain } from "@/components/Domain";
 import { Vanity } from "@/components/Vanity";
+import { Post } from "@/components/Post";
 
 export default function App() {
   return (
@@ -14,17 +13,15 @@ export default function App() {
       <FetchData />
       <div className="stats stats-vertical sm:stats-horizontal w-full">
         <AccountSet />
-        <DID />
-        {/* <Multisign /> */}
+        <SetRegularKey/>
       </div>
-      {/* <div className="stats stats-vertical sm:stats-horizontal"> */}
-        <Payload />
-        {/* <NFT /> */}
-      {/* </div> */}
       <div className="stats stats-vertical sm:stats-horizontal w-full">
-        <AddressCheck />
+        <Payload />
+        <GetName />
+      </div>
+      <div className="stats stats-vertical sm:stats-horizontal w-full">
         <Domain />
-        {/* <Vanity /> */}
+        <Vanity />
       </div>
     </>
   )

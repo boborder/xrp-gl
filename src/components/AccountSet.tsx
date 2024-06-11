@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
-import { convertStringToHex, Transaction } from 'xrpl';
+import { convertStringToHex } from 'xrpl';
+import { createPayload } from "@/lib/payload";
 
 export const AccountSet = () => {
-  const { xumm, userInfo } = useUser();
+  const { xumm, user } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
+  const [clear, setClear] = useState<boolean>(false);
 
   const handlePayloadStatus = async (payload?: any) => {
     const checkPayloadStatus = setInterval(async () => {
@@ -21,72 +23,49 @@ export const AccountSet = () => {
     }, 10000);
   };
 
-  const push = async (payload?: any) => {
-    const message = payload?.pushed ? (
-      `Payload '${payload?.uuid}' pushed to your phone.`
-    ) : (
-      "Payload not pushed, opening payload..."
-    )
-    alert(message);
-    if (!payload?.pushed) {
-      window.open(payload?.next.always);
-    }
-  };
-
-
-  const createPayload = async (Transaction: any) => {
-    setTx(undefined);
-    const payload = await xumm.payload?.create({
-      ...Transaction,
-      // Fee: 123,
-    });
-    await xumm.xapp?.openSignRequest(payload);
-    setQr(payload?.refs.qr_png);
-    push(payload);
-    handlePayloadStatus(payload);
-  };
-
   const accountSet = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const domain = formData?.get("domain");
     const email = formData?.get("email");
-    const flag = formData.get("flag");
+    const flag = formData?.get("flag");
 
-    const domainHex = convertStringToHex(domain as string)
-
-    const crypto = require('crypto')
-    const md5hex = (str: string) => {
-      const hash = crypto.createHash('md5').update(str, 'binary').digest('hex');
-      return hash.toUpperCase();  // 大文字に変換
+    const transaction: any = {};
+    transaction.TransactionType = 'AccountSet';
+    if (domain) {
+      const domainHex = convertStringToHex(domain as string);
+      transaction.Domain = domainHex;
     }
-    const emailhash = md5hex(email as string)
+    if (email) {
+      const crypto = require('crypto');
+      const md5hex = (str: string) => {
+        const hash = crypto.createHash('md5').update(str, 'binary').digest('hex');
+        return hash.toUpperCase();  // 大文字に変換
+      };
+      const emailhash = md5hex(email as string);
+      transaction.EmailHash = emailhash;
+    }
+    if (flag !== "None") {
+      if (clear) {
+        transaction.ClearFlag = flag;
+      } else {
+        transaction.SetFlag = flag;
+      }
+    }
 
-    // account set transaction
-    flag ? (
-      await createPayload({
-        TransactionType: 'AccountSet',
-        Domain: domainHex,
-        EmailHash: emailhash
-      })
-    ) : (
-      await createPayload({
-        TransactionType: 'AccountSet',
-        Domain: domainHex,
-        EmailHash: emailhash,
-        SetFlag: flag
-      })
-    )
+    const payload = await createPayload(transaction)
+    setQr(payload.qr)
+    handlePayloadStatus(payload.uuid)
   }
 
   return (
     <>
-      {userInfo.account && (
+      {user.account && (
         <>
           {qr || tx ? (
             <>
               {qr &&
-                <div className="stat xs:w-64">
+                <div className="stat">
                   <Imag
                     src={qr}
                     alt="QR"
@@ -98,7 +77,7 @@ export const AccountSet = () => {
               }
 
               {tx &&
-                <div className="stat xs:w-64">
+                <div className="stat">
                   <details className="stat-desc collapse collapse-arrow border border-base-300 bg-base-100">
                     <summary className="collapse-title text-accent">
                       {tx.response.resolved_at}
@@ -114,7 +93,7 @@ export const AccountSet = () => {
             </>
           ) : (
             <div className="stat">
-              <label className="stat-title text-accent">
+              <label className="text-accent text-xl">
                 Account Set
               </label>
               <form onSubmit={accountSet} className="my-3 join join-vertical">
@@ -134,14 +113,25 @@ export const AccountSet = () => {
                 />
 
                 <select name="flag" className="select select-bordered join-item">
-                  <option disabled value={undefined}>Set Flag</option>
-                  <option value={undefined}>None</option>
-                  <option value={8}>DefaultRippling</option>
+                  <option disabled>Set Flag</option>
+                  <option value={undefined!}>None</option>
                   <option value={1}>RequireDestTag</option>
-                  <option value={9}>DepositeAuth</option>
+                  <option value={2}>RequireAuth</option>
+                  <option value={3}>DisallowXRP</option>
                   <option value={4}>DisableMaster</option>
+                  <option value={6}>NoFreeze</option>
+                  <option value={7}>GlobalFreeze</option>
+                  <option value={8}>DefaultRippling</option>
+                  <option value={9}>DepositeAuth</option>
+                  <option value={10}>AuthorizedNFTokenMinter</option>
+                  <option value={16}>AllowTrustLineClawback</option>
                 </select>
-                <button className="btn btn-primary join-item">Account Set</button>
+                <label tabIndex={0} className="btn btn-ghost swap join-item">
+                  <input type="checkbox" checked={clear} onChange={() => setClear(!clear)} />
+                  <div className="swap-on">ClearFlag: on  ❤️</div>
+                  <div className="swap-off">ClearFlag: off ♡</div>
+                </label>
+                <button className="text-xl btn btn-primary join-item">AccountSet</button>
               </form>
             </div>
           )}

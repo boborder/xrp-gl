@@ -10,14 +10,16 @@ export default function NotFound() {
                 Go back { }
                 <Link href={'/'} className='text-error hover:underline'>
                     Home &rarr;
+                </Link>
+                <div className="p-4">
                     <Imag
                         src={"/ipfs/404.png"}
                         width={360}
-                        height={240}
-                        alt="logo"
-                        className="w-auto"
+                        height={360}
+                        alt="404"
+                        className="m-4"
                     />
-                </Link>
+                </div>
             </div>
         </div>
     );

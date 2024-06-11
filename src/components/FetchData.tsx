@@ -6,7 +6,7 @@ import { Imag } from "./Imag";
 import { Donate } from "./Donate";
 
 export const FetchData = () => {
-    const { xumm, userInfo } = useUser();
+    const { xumm, user } = useUser();
 
     const [data, setData] = useState()
     const [fee, setFee] = useState("")
@@ -14,7 +14,7 @@ export const FetchData = () => {
     const [priceD, setPriceD] = useState<{ XRP: number; }>();
     const [balance, setBalance] = useState<number>()
 
-    const ws = "wss://xrplcluster.com"
+    const ws = `${user.networkEndpoint || "wss://xrplcluster.com"}`
     const client = new Client(ws);
 
     useEffect(() => {
@@ -26,7 +26,7 @@ export const FetchData = () => {
             clearInterval(fetchDataInterval);
             clearInterval(priceInterval);
         };
-    }, [userInfo.account]);
+    }, [user.account]);
 
     const fetchData = async () => {
         if (!client.isConnected()) {
@@ -46,9 +46,9 @@ export const FetchData = () => {
         };
 
         const fetchBalance = async () => {
-            if (userInfo.account) {
+            if (user.account) {
                 try {
-                    const balance = await client.getXrpBalance(userInfo.account);
+                    const balance = await client.getXrpBalance(user.account);
                     setBalance(balance);
                 } catch (error) {
                     console.error("Error fetching balance:", error);
@@ -60,7 +60,7 @@ export const FetchData = () => {
     };
 
     const fetchPrice = async () => {
-        if (userInfo.account) {
+        if (user.account) {
             const priceJPY: any = await xumm.helpers?.getRates('JPY');
             const priceUSD: any = await xumm.helpers?.getRates('USD');
             setPriceY(priceJPY);
@@ -90,11 +90,10 @@ export const FetchData = () => {
 
                 </div>
 
-                {/* <Post /> */}
                 <Donate />
 
             </div>
-            {userInfo.account && (
+            {user.account && (
                 <div className="stats stats-vertical sm:stats-horizontal">
                     <div className="stat">
                         <div className="stat-title">XRP Price</div>
@@ -110,7 +109,7 @@ export const FetchData = () => {
                         <div className="stat-title">Balance</div>
                         <div className="stat-value font-mono text-3xl">{balance}</div>
                         <div className="stat-desc text-xl">XRP</div>
-                        <div className="stat-desc text-xs font-bold text-accent">{userInfo.account}</div>
+                        <div className="stat-desc text-xs font-bold text-accent">{user.account}</div>
                     </div>
                 </div>
             )}
