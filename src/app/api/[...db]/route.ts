@@ -19,12 +19,19 @@ app.get("/get", async (c) => {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
   const db = drizzle(pool);
   try {
-    if (name) {
-      const getName = await db.select().from(users).where(eq(users.name, name));
-      if (account) {
-        const getAccount = await db.select().from(users).where(eq(users.account, account));
-        return c.json({ getAccount, getName })
+    if (account) {
+      const getAccount = await db
+      .select()
+      .from(users)
+      .where(eq(users.account, account));
+      if (name) {
+        const getName = await db
+          .select()
+          .from(users)
+          .where(eq(users.name, name));
+        return c.json({ getAccount, getName });
       }
+      return c.json({ getAccount });
     }
   } catch (error) {
     return c.json({ error: "Insert failed" }, 500);
@@ -90,8 +97,7 @@ app.post("/post", bearerAuth({ token: process.env.TOKEN! }), async (c) => {
   const db = drizzle(pool);
 
   try {
-
-    const result: {uuid: string, account: string}[] = await db
+    const result: { uuid: string; account: string }[] = await db
       .insert(users)
       .values({
         name: name,
@@ -109,9 +115,9 @@ app.post("/post", bearerAuth({ token: process.env.TOKEN! }), async (c) => {
         paystring: paystring,
         url: url,
         tel: tel,
-        sns: sns
+        sns: sns,
       })
-      .returning({uuid: users.uuid, account: users.account})
+      .returning({ uuid: users.uuid, account: users.account })
       .execute();
     return c.json(result[0]);
   } catch (error) {
@@ -149,8 +155,8 @@ app.post("/set", bearerAuth({ token: process.env.TOKEN! }), async (c) => {
 
   try {
     const result = await db
-    .update(users)
-    .set({
+      .update(users)
+      .set({
         name: name,
         account: account,
         age: age,
@@ -166,7 +172,7 @@ app.post("/set", bearerAuth({ token: process.env.TOKEN! }), async (c) => {
         paystring: paystring,
         url: url,
         tel: tel,
-        sns: sns
+        sns: sns,
       })
       .where(eq(users.account, account))
       .returning()

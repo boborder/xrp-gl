@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 export const EditProfile = () => {
     const { xumm, user, gravatar, store, account } = useUser();
 
-    const { setError, register, handleSubmit, watch, setValue } = useForm<UserProfile>({
+    const { register, handleSubmit, watch, setValue } = useForm<UserProfile>({
         defaultValues: {
             account: user.account,
             avatar: store?.avatar || gravatar || user.picture,
@@ -41,6 +41,12 @@ export const EditProfile = () => {
     const router = useRouter()
 
     const onSubmit = async (data: UserProfile) => {
+        Object.keys(data).forEach(key => {
+            const typedKey = key as keyof UserProfile;
+            if (data[typedKey] === '') {
+                data[typedKey] = undefined;
+            }
+        });
         const id = await hash(user.account)
         await xumm.userstore?.set(id, data);
         setIsEditing(false)
@@ -214,18 +220,18 @@ export const EditProfile = () => {
                         <label className="label">
                             <span className="label-text">Gender</span>
                         </label>
-                    <div className="input input-bordered flex justify-between">
+                        <div className="input input-bordered flex justify-between">
                         <label className="label cursor-pointer">
                             <span className="label-text">female</span>
-                            <input type="radio" value="female" id="female" className="radio checked:bg-red-500" checked   {...register('gender')} />
+                            <input type="radio" value="female" id="female" className="radio checked:bg-red-500" checked {...register('gender')} />
                         </label>
                         <label className="label cursor-pointer">
                             <span className="label-text">male</span>
-                            <input type="radio" value="male" id="male" className="radio checked:bg-blue-500" checked   {...register('gender')} />
+                            <input type="radio" value="male" id="male" className="radio checked:bg-blue-500" checked {...register('gender')} />
                         </label>
                         <label className="label cursor-pointer">
                             <span className="label-text">none</span>
-                            <input type="radio" value={undefined} id="none" className="radio checked:bg-gray-500" checked   {...register('gender')} />
+                            <input type="radio" value="" id="none" className="radio checked:bg-gray-500" checked {...register('gender')} />
                         </label>
                     </div>
                     <div className="form-control">

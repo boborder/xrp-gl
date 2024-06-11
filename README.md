@@ -1,24 +1,5 @@
 # XRP GL
 
-DIDの詳細設計
-Payment Channel設計
-セキュリティ設計
-setReglerKey、SiglerListSetの修正
-NFT Mint機能修正
-Paystring実装
-
-DevnetでのDIDSetトランザクションの動作確認、ドキュメントの仕様設計
-DIDSetトランザクションのDataフィールドにプロフィール情報をjson形式で追加するかipfsを使用する
-AccountSetトランザクションの設定項目の追加
-SignerListSet、SetReglerKeyトランザクションの追加（エラー）
-Profile画面からDIDSetとDIDDeleteトランザクションをドキュメントの作成をPinataAPIで自動化
-XUMMAPIのユーザストアに保存することで状態の保持
-プロフィール画面の改良、項目追加、細かな変更
-payment pointer用のデーターベースとサービス購入用の非同期ペイメントチャンネルの準備
-vanityアドレスの生成機能（仮）追加
-NFT Mint機能（仮）追加
-擬似トランザクションで何かできないか？
-
 ## DID & Paystring
 
 ダウンロードしてディレクトリに移動
@@ -56,6 +37,8 @@ XUMMAPI={API Key}
 XUMMSECRET={Secret}
 DATABASE_URL={DB URL}
 PINATA_JWT={Pinata JWT}
+SEED={ペイチャン用Wallet seed}
+TOKEN={認証用トークン}
 
 ```
 

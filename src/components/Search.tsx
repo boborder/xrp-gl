@@ -19,7 +19,7 @@ export const Search = () => {
                 id="query"
                 name="query"
                 placeholder="Search"
-                className="input input-bordered join-item"
+                className="input input-bordered join-item w-full"
             />
             <button type="submit" className="btn join-item btn-neutral">🔍</button>
         </div>

@@ -14,7 +14,7 @@ export const SideBar = () => {
             <nav className="drawer-side">
                 <label htmlFor="side-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
 
-                <ul className="menu p-2 w-auto min-w-52 text-center text-lg h-full bg-base-100">
+                <ul className="menu p-2 w-56 h-full text-center text-lg bg-base-100">
                     <li><Search/></li>
                     <li><Link href="/" className="[transition:0.3s] text-lg hover:text-primary">
                         Home

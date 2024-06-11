@@ -3,7 +3,7 @@
 import { useState, useEffect, useContext, createContext } from "react";
 import { Xumm } from "xumm";
 import { hash } from '@/lib/hash';
-import { Client } from "xrpl";
+import { AccountInfoResponse, AccountObjectsResponse, AccountTxResponse, Client } from "xrpl";
 
 const xumm = new Xumm(process.env.XUMMAPI!, process.env.XUMMSECRET!);
 
@@ -83,44 +83,37 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const client = new Client(ws);
     await client.connect();
 
-    const info = await client.request({
+    const info: AccountInfoResponse = await client.request({
       command: "account_info",
       account: userData.account!,
     });
-    const data: any = info.result
+    const data = info.result
+    setAccount(data)
 
-    const tx = await client.request({
+    const tx: AccountTxResponse = await client.request({
       command: "account_tx",
       account: userData.account!,
       ledger_index_min: -1,
       ledger_index_max: -1,
+      limit: 10,
     });
-    const txData: any = tx.result
+    const txData = tx.result
+    // console.log(txData)
 
-    const obj = await client.request({
+    const obj: AccountObjectsResponse = await client.request({
       command: "account_objects",
       account: userData.account!,
+      type: "did",
     });
-    const objData: any = obj.result
+    const objData = obj.result
+    // console.log(objData)
 
-    // const json = { method: "account_info", params: [{ account: userData.account }] };
-    // const info = await fetch(`${userData.networkEndpoint?.replace("wss", "https").replace("51233", "51234") || "https://xrplcluster.com"}`, {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(json),
-    // });
-
-    // const data = await info.json();
-    setAccount(data)
-    await client.disconnect()
-
-    const gravatar = data.account_data?.urlgravatar;
+    const gravatar = data.account_data.EmailHash;
     if (gravatar) {
-      setGravatar(`${gravatar.replace("http", "https")}?s=256`)
+      setGravatar(`https://gravatar.com/avatar/${gravatar.toLowerCase()}?s=256`)
     }
 
+    await client.disconnect()
   }
 
   return (
