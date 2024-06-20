@@ -7,37 +7,44 @@ import { useRouter } from "next/navigation";
 import { createPayload } from "@/lib/payload";
 
 export const Payload = () => {
-  const { xumm, user, account } = useUser();
+  const { xumm, user, info } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
   const router = useRouter()
 
-  const handlePayloadStatus = async (payload?: any) => {
-    const checkPayloadStatus = setInterval(async () => {
-      const status: any = await xumm.payload?.get(payload?.uuid as string);
-      if (status?.meta.resolved && !status?.meta.cancelled && (!tx || !status?.meta.cancelled)) {
-        clearInterval(checkPayloadStatus);
-        setTx(status);
-        setQr(undefined);
-      }
-    }, 10000);
+  const handlePayloadStatus = async (uuid: string) => {
+    if (uuid) {
+      const checkPayloadStatus = setInterval(async () => {
+        const status = await xumm.payload?.get(uuid);
+        if (status?.meta.resolved) {
+          clearInterval(checkPayloadStatus);
+          setTx(status);
+          setQr(undefined);
+          console.log(status)
+        }
+      }, 10000);
+    }
   };
 
   const payload = async () => {
     const payload = await createPayload({
-      TransactionType: 'SignIn'
+      TransactionType: 'SignIn',
     });
-    handlePayloadStatus(payload.uuid);
-    setQr(payload.qr);
+    if (payload) {
+      setQr(payload.qr);
+      handlePayloadStatus(payload.uuid);
+    }
   };
 
   const Signin = async () => {
     await xumm.authorize();
-    router.replace(`/profile/${user.account}`)
+    window.location.reload()
+    router.push(`/profile/${user.account || "user"}`)
   };
 
   const logout = async () => {
     await xumm.logout();
+    window.location.reload()
     router.push("/")
   };
   return (
@@ -60,7 +67,7 @@ export const Payload = () => {
 
               {tx &&
                 <div className="stat">
-                  <details className="collapse collapse-arrow border border-base-300 bg-base-100">
+                  <details className="collapse collapse-arrow border border-primary bg-base-100">
                     <summary className="collapse-title text-accent">
                       {tx.response.resolved_at}
                     </summary>
@@ -87,14 +94,14 @@ export const Payload = () => {
                   />
                 </button>
 
-                {account && (
+                {info && (
                   <details className="my-3 collapse collapse-arrow border border-primary bg-base-100">
                     <summary className="collapse-title text-accent text-xl">
                       Account Info
                     </summary>
                     <div className="collapse-content text-left">
                       <pre className="text-success text-xs overflow-scroll">
-                        result: {JSON.stringify(account, null, 2)}
+                        {JSON.stringify(info, null, 2)}
                       </pre>
                     </div>
                   </details>

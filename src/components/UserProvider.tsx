@@ -3,9 +3,10 @@
 import { useState, useEffect, useContext, createContext } from "react";
 import { Xumm } from "xumm";
 import { hash } from '@/lib/hash';
-import { AccountInfoResponse, AccountObjectsResponse, AccountTxResponse, Client } from "xrpl";
+import { websocket } from "@/lib/websocket";
 
 const xumm = new Xumm(process.env.XUMMAPI!, process.env.XUMMSECRET!);
+// const xumm = new Xumm(process.env.XUMMAPI!);
 
 type UserType = {
   account?: string;
@@ -20,31 +21,35 @@ type UserType = {
 };
 
 export type UserProfile = {
-  account?: string;
-  age?: number;
-  avatar?: string;
-  bio?: string;
-  currency?: string;
-  country?: string;
-  did?: string;
-  email?: string;
-  gender?: string;
-  job?: string;
-  name?: string;
-  lang?: string;
-  locate?: string;
-  paystring?: string;
-  sns?: string;
-  tel?: string;
-  url?: string;
-  uuid?: string;
+  account?: string | null;
+  age?: number | null;
+  avatar?: string | null;
+  bio?: string | null;
+  currency?: string | null;
+  country?: string | null;
+  create_at?: string | null;
+  done?: boolean | null;
+  did?: string | null;
+  email?: string | null;
+  gender?: string | null;
+  job?: string | null;
+  lang?: string | null;
+  locate?: string | null;
+  name?: string | null;
+  paystring?: string | null;
+  sns?: string | null;
+  tel?: string | null;
+  url?: string | null;
+  uuid?: string | null;
 };
 
 type UserContextType = {
   user: UserType;
   xumm: typeof xumm;
   store?: UserProfile;
-  account: any;
+  info: any;
+  tx: any;
+  obj: any;
   gravatar?: string;
 };
 
@@ -53,7 +58,9 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState({})
   const [store, setStore] = useState<UserProfile | undefined>(undefined);
-  const [account, setAccount] = useState({});
+  const [info, setInfo] = useState({});
+  const [tx, setTx] = useState({});
+  const [obj, setObj] = useState({});
   const [gravatar, setGravatar] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -75,49 +82,55 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     };
     setUser(userData);
 
+    //初回ログイン時にuserstoreに追加
     const id = await hash(userData.account)
-    const getUser = await xumm.userstore?.get(id)
-    setStore(getUser)
-
-    const ws = `${userData.networkEndpoint || "wss://xrplcluster.com"}`
-    const client = new Client(ws);
-    await client.connect();
-
-    const info: AccountInfoResponse = await client.request({
-      command: "account_info",
-      account: userData.account!,
-    });
-    const data = info.result
-    setAccount(data)
-
-    const tx: AccountTxResponse = await client.request({
-      command: "account_tx",
-      account: userData.account!,
-      ledger_index_min: -1,
-      ledger_index_max: -1,
-      limit: 10,
-    });
-    const txData = tx.result
-    // console.log(txData)
-
-    const obj: AccountObjectsResponse = await client.request({
-      command: "account_objects",
-      account: userData.account!,
-      type: "did",
-    });
-    const objData = obj.result
-    // console.log(objData)
-
-    const gravatar = data.account_data.EmailHash;
-    if (gravatar) {
-      setGravatar(`https://gravatar.com/avatar/${gravatar.toLowerCase()}?s=256`)
+    const getStore = await xumm.userstore?.get(id)
+    // console.log(getStore)
+    if (getStore?.account) setStore(getStore)
+    else {
+      const set = await xumm.userstore?.set(id, { account: userData.account })
+      console.log(set)
     }
 
-    await client.disconnect()
+    //初回ログイン時にdbに追加
+    const getAccount = await fetch(`/api/get?account=${userData.account}`, {method: "GET",})
+    if (getAccount) {
+      const profile = await getAccount.json()
+      // console.log(profile?.result)
+      if (profile.result === undefined) {
+        const get = await fetch(`/api/${userData.account}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${process.env.TOKEN}`,
+          }
+        })
+        const data = await get.json()
+        console.log(data)
+      }
+    }
+
+    const ws = `${userData.networkEndpoint || "wss://xrplcluster.com"}`
+    const data = await websocket(userData.account!, ws)
+    // console.log(data)
+    if (data) {
+      setInfo(data?.info)
+      setTx(data?.tx)
+      setObj(data?.obj)
+      const gravatar = data.info.account_data.EmailHash;
+      if (gravatar) setGravatar(`https://gravatar.com/avatar/${gravatar.toLowerCase()}?s=256`)
+    }
+    // const rpc = await fetch("/api/info", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({ account: userData.account, network: ws })
+    // })
+    // console.log(await rpc.json())
   }
 
   return (
-    <UserContext.Provider value={{ user, xumm, store, account, gravatar }}>
+    <UserContext.Provider value={{ user, xumm, store, info, tx, obj, gravatar }}>
       {children}
     </UserContext.Provider>
   )

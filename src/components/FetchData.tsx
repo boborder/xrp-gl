@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from "react";
-import { Client } from "xrpl";
+import { Client, FeeResponse } from "xrpl";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
 import { Donate } from "./Donate";
@@ -8,13 +8,13 @@ import { Donate } from "./Donate";
 export const FetchData = () => {
     const { xumm, user } = useUser();
 
-    const [data, setData] = useState()
+    const [data, setData] = useState<number | undefined>(undefined)
     const [fee, setFee] = useState("")
     const [priceY, setPriceY] = useState<{ XRP: number; }>();
     const [priceD, setPriceD] = useState<{ XRP: number; }>();
     const [balance, setBalance] = useState<number>()
 
-    const ws = `${user.networkEndpoint || "wss://xrplcluster.com"}`
+    const ws = user.networkEndpoint || "wss://xrplcluster.com"
     const client = new Client(ws);
 
     useEffect(() => {
@@ -32,10 +32,9 @@ export const FetchData = () => {
         if (!client.isConnected()) {
             await client.connect();
         }
-
         const fetchFee = async () => {
             try {
-                const fee: any = await client.request({ command: "fee" });
+                const fee: FeeResponse = await client.request({ command: "fee" });
                 const ledger = fee.result.ledger_current_index;
                 const openLedgerFee = fee.result.drops.open_ledger_fee;
                 setData(ledger);
@@ -57,6 +56,7 @@ export const FetchData = () => {
         };
 
         await Promise.all([fetchFee(), fetchBalance()]);
+        // await client.disconnect()
     };
 
     const fetchPrice = async () => {

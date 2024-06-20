@@ -16,7 +16,7 @@ module.exports = {
   async rewrites() {
     const gateway = "https://ipfs.io/ipfs/";
     const cid = "bafybeig3w3pnokgbxt55hcz5yv6o7b6calyjjfbl22qwnzpdjdzmzvj6xa";
-    const ipfs = `${gateway}${cid}`;
+    const ipfs = gateway + cid;
     return [
       {
         source: "/ipfs/:file*",
@@ -25,6 +25,6 @@ module.exports = {
     ];
   },
   experimental: {
-    typedRoutes: true,
+    // typedRoutes: true,
   },
 };

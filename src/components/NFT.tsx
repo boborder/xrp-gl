@@ -1,33 +1,17 @@
 "use client"
 
 import { useEffect, useRef, useState } from 'react';
-import { Client, convertHexToString, convertStringToHex } from 'xrpl';
+import { AccountNFTsResponse, AccountTxResponse, Client, convertHexToString, convertStringToHex } from 'xrpl';
 import { useUser } from '@/components/UserProvider'
 import { Imag } from './Imag';
 import { createPayload } from "@/lib/payload";
-
-interface NFT {
-    Flags: number;
-    Issuer: string;
-    NFTokenID: string;
-    NFTokenTaxon: number;
-    TransferFee: number;
-    URI: string;
-    nft_serial: number;
-}
-interface AccountNFTResponse {
-    account: string;
-    account_nfts: NFT[];
-    ledger_current_index: number;
-    validated: boolean;
-    _nodepref: string;
-}
 
 export const NFT = () => {
     const { xumm, user } = useUser();
     const [qr, setQr] = useState<string | undefined>(undefined);
     const [tx, setTx] = useState<any | undefined>(undefined);
-    const [info, setInfo] = useState<AccountNFTResponse | undefined>(undefined);
+    const [data, setData] = useState<any | undefined>(undefined);
+    const [info, setInfo] = useState<AccountNFTsResponse | undefined>(undefined);
     const [fetchedData, setFetchedData] = useState<any>(null);
     const [file, setFile] = useState<string | undefined>(undefined);
     const [cid, setCid] = useState<string | undefined>(undefined);
@@ -49,23 +33,11 @@ export const NFT = () => {
             const network = user.networkEndpoint
             const client = new Client(network!)
             await client.connect()
-            const info = await client.request({
+            const info: AccountNFTsResponse = await client.request({
                 command: "account_nfts",
                 account: user.account,
             });
-            // const json = { method: "account_nfts", params: [{ account: user.account }] };
-            // const network = user.networkEndpoint?.replace("wss", "https").replace("51233", "51234")
-            // console.log(network)
-            // const response = await fetch((network || "https://xrplcluster.com"), {
-            //     method: "POST",
-            //     headers: {
-            //         "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify(json),
-            // });
-
-            // const info: any = await response.json();
-            setInfo(info.result as AccountNFTResponse);
+            setInfo(info);
             await client.disconnect()
         };
     }
@@ -87,14 +59,16 @@ export const NFT = () => {
 
     // 全てのNFTのメタデータを取得
     const fetchAllConvertedURIs = async () => {
-        if (info?.account_nfts) {
+        if (info?.result.account_nfts) {
             const allFetchedData = await Promise.all(
-                info.account_nfts.map(async (nft) => {
-                    const convertedURI = convertIpfsToHttps(convertHexToString(nft.URI));
-                    return await fetchDataFromConvertedURI(convertedURI);
+                info.result.account_nfts.map(async (nft) => {
+                    if (nft.URI) {
+                        const convertedURI = convertIpfsToHttps(convertHexToString(nft.URI));
+                        return await fetchDataFromConvertedURI(convertedURI);
+                    }
                 })
             );
-            setFetchedData(allFetchedData as any);
+            setFetchedData(allFetchedData);
         }
     };
 
@@ -125,15 +99,35 @@ export const NFT = () => {
         uploadFile(e.target.files[0]);
     };
 
-    const handlePayloadStatus = async (payload?: any) => {
-        const checkPayloadStatus = setInterval(async () => {
-            const status: any = await xumm.payload?.get(payload?.uuid as string);
-            if (status?.meta.resolved && !status?.meta.cancelled && (!tx || !status?.meta.cancelled)) {
-                clearInterval(checkPayloadStatus);
-                setTx(status);
-                setQr(undefined);
+    const handlePayloadStatus = async (uuid: string) => {
+        if (uuid) {
+            const checkPayloadStatus = setInterval(async () => {
+                const status = await xumm.payload?.get(uuid);
+                if (status?.meta.resolved) {
+                    clearInterval(checkPayloadStatus);
+                    setTx(status);
+                    setData(status.payload)
+                    setQr(undefined);
+                    if (status.meta.signed === true) {
+                    const client = new Client(user.networkEndpoint!);
+                    await client.connect();
+                    const tx: AccountTxResponse = await client.request({
+                        command: "account_tx",
+                        account: user.account!,
+                        ledger_index_max: -1,
+                        limit: 1,
+                        tx_type: "NFTokenMint",
+                    });
+                    if (tx) {
+                        const txData = tx.result.transactions[0].tx
+                        // console.log(txData)
+                        setData(txData)
+                    }
+                    await client.disconnect()
+                }
             }
-        }, 10000);
+            }, 10000);
+        }
     };
 
     const mint = async () => {
@@ -165,9 +159,10 @@ export const NFT = () => {
                 Flags: 8,
                 URI: uri
             });
-            handlePayloadStatus(payload.uuid);
-            setQr(payload.qr);
-
+            if (payload) {
+                handlePayloadStatus(payload.uuid);
+                setQr(payload.qr);
+            }
             setup()
         } catch (e) {
             console.log(e);
@@ -188,7 +183,7 @@ export const NFT = () => {
                                     height={256}
                                     className='mx-auto w-full'
                                 />}
-                            <details className="my-3 collapse collapse-arrow border border-base-300 bg-base-100">
+                            <details className="my-3 collapse collapse-arrow border border-primary bg-base-100">
                                 <summary className="collapse-title text-accent text-xl">
                                     Metadata
                                 </summary>
@@ -219,13 +214,13 @@ export const NFT = () => {
 
                             {tx &&
                                 <div className="stat">
-                                    <details className="collapse collapse-arrow border border-base-300 bg-base-100">
-                                        <summary className="collapse-title text-accent">
+                                    <details className="collapse collapse-arrow border border-primary bg-base-100">
+                                        <summary className="collapse-title text-accent text-xl">
                                             {tx.response.resolved_at}
                                         </summary>
                                         <div className="collapse-content text-left">
                                             <pre className="text-success text-xs overflow-scroll">
-                                                payload: {JSON.stringify(tx.payload, null, 2)}
+                                                {JSON.stringify(data, null, 2)}
                                             </pre>
                                         </div>
                                     </details>

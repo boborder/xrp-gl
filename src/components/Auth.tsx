@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { Imag } from "@/components/Imag"
 import { useUser } from "@/components/UserProvider"
+import Link from 'next/link';
 
 export const Auth = () => {
     const { user, xumm, store, gravatar, } = useUser();
@@ -10,8 +11,8 @@ export const Auth = () => {
     const connect = async () => {
         try {
             await xumm.authorize();
-            router.replace(`/profile/${user.account}`)
-            router.refresh()
+            window.location.reload()
+            router.push(`/profile/${user.account || "user"}`)
         } catch (error) {
             console.error("Error during connection:", error);
         }
@@ -20,7 +21,8 @@ export const Auth = () => {
     const logout = async () => {
         try {
             await xumm.logout();
-            router.refresh()
+            window.location.reload()
+            router.push("/")
         } catch (error) {
             console.error("Error during logout:", error);
         }
@@ -41,30 +43,30 @@ export const Auth = () => {
                 </button>
                 <ul tabIndex={0} className="p-2 z-10 shadow menu menu-md dropdown-content bg-base-100 rounded-box w-auto bg-opacity-90">
                     <li>
-                        <a onMouseDown={() => router.replace("/")}>
+                        <Link href="/">
                             <button className="btn btn-xs hover:text-primary">
                                 Home
                             </button>
                             <span className="badge">🏠</span>
-                        </a>
+                        </Link>
                     </li>
                     <li>
-                        <a onMouseDown={() => router.push(`/profile/${user.account}`)}>
+                        <Link href={`/profile/${user.account || "user"}`}>
                             <button className="btn btn-xs hover:text-primary">Profile</button>
                             <span className="badge">🏴‍☠️</span>
-                        </a>
+                        </Link>
                     </li>
                     {/* <li>
-                        <a onMouseDown={() => router.push("/test")}>
+                        <Link href="/test">
                             <button className="btn btn-xs hover:text-primary">Test</button>
                             <span className="badge">⚙️</span>
-                        </a>
+                        </Link>
                     </li> */}
                     <li>
-                        <a onMouseDown={() => router.push("/")}>
+                        <Link href="/">
                             <button className="btn btn-xs hover:text-primary">About</button>
                             <span className="badge">📚</span>
-                        </a>
+                        </Link>
                     </li>
                     <li>
                         <a onMouseDown={logout}>
@@ -86,9 +88,9 @@ export const Auth = () => {
                 </button>
                 <ul tabIndex={0} className="p-2 z-10 shadow menu menu-md dropdown-content bg-base-100 rounded-box w-auto bg-opacity-90">
                     <li>
-                        <a onMouseDown={() => router.replace("/")}>
+                        <Link href="/">
                             <button className="btn btn-xs hover:text-primary">Home</button>
-                        </a>
+                        </Link>
                     </li>
                     {/* <li>
                         <a onMouseDown={() => router.push("/test")}>
@@ -97,10 +99,10 @@ export const Auth = () => {
                         </a>
                     </li> */}
                     <li>
-                        <a onMouseDown={() => router.push("/")}>
+                        <Link href="/">
                             <button className="btn btn-xs hover:text-primary">About</button>
                             <span className="badge">📚</span>
-                        </a>
+                        </Link>
                     </li>
                     <li>
                         <a onMouseDown={connect}>

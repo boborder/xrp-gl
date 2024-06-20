@@ -3,24 +3,45 @@
 import { useState } from "react";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
-import { convertStringToHex } from 'xrpl';
+import { AccountTxResponse, Client, convertStringToHex } from 'xrpl';
 import { createPayload } from "@/lib/payload";
 
 export const AccountSet = () => {
   const { xumm, user } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
+  const [data, setData] = useState<any | undefined>(undefined);
   const [clear, setClear] = useState<boolean>(false);
 
-  const handlePayloadStatus = async (payload?: any) => {
-    const checkPayloadStatus = setInterval(async () => {
-      const status: any = await xumm.payload?.get(payload?.uuid as string);
-      if (status?.meta.resolved && !status?.meta.cancelled && (!tx || !status?.meta.cancelled)) {
-        clearInterval(checkPayloadStatus);
-        setTx(status);
-        setQr(undefined);
-      }
-    }, 10000);
+  const handlePayloadStatus = async (uuid: string) => {
+    if (uuid) {
+      const checkPayloadStatus = setInterval(async () => {
+        const status = await xumm.payload?.get(uuid);
+        if (status?.meta.resolved) {
+          clearInterval(checkPayloadStatus);
+          setTx(status);
+          setData(status.payload)
+          setQr(undefined);
+          if (status.meta.signed === true) {
+            const client = new Client(user.networkEndpoint!);
+            await client.connect();
+            const tx: AccountTxResponse = await client.request({
+              command: "account_tx",
+              account: user.account!,
+              ledger_index_max: -1,
+              limit: 1,
+              tx_type: "AccountSet",
+            });
+            if (tx) {
+              const txData = tx.result.transactions[0].tx
+              // console.log(txData)
+              setData(txData)
+            }
+            await client.disconnect()
+          }
+        }
+      }, 10000);
+    }
   };
 
   const accountSet = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -38,12 +59,8 @@ export const AccountSet = () => {
     }
     if (email) {
       const crypto = require('crypto');
-      const md5hex = (str: string) => {
-        const hash = crypto.createHash('md5').update(str, 'binary').digest('hex');
-        return hash.toUpperCase();  // 大文字に変換
-      };
-      const emailhash = md5hex(email as string);
-      transaction.EmailHash = emailhash;
+      const emailhash = crypto.createHash('md5').update(email, 'binary').digest('hex');
+      transaction.EmailHash = emailhash.toUpperCase();
     }
     if (flag !== "None") {
       if (clear) {
@@ -54,8 +71,10 @@ export const AccountSet = () => {
     }
 
     const payload = await createPayload(transaction)
-    setQr(payload.qr)
-    handlePayloadStatus(payload.uuid)
+    if (payload) {
+      setQr(payload.qr)
+      handlePayloadStatus(payload.uuid)
+    }
   }
 
   return (
@@ -78,13 +97,13 @@ export const AccountSet = () => {
 
               {tx &&
                 <div className="stat">
-                  <details className="stat-desc collapse collapse-arrow border border-base-300 bg-base-100">
-                    <summary className="collapse-title text-accent">
+                  <details className="stat-desc collapse collapse-arrow border border-primary bg-base-100">
+                    <summary className="collapse-title text-accent text-xl">
                       {tx.response.resolved_at}
                     </summary>
                     <div className="collapse-content text-left">
                       <pre className="text-success text-xs overflow-scroll">
-                        payload: {JSON.stringify(tx.payload, null, 2)}
+                        {JSON.stringify(data, null, 2)}
                       </pre>
                     </div>
                   </details>

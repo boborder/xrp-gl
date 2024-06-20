@@ -7,30 +7,31 @@ import { UserProfile, useUser } from "@/components/UserProvider"
 import { DID } from './DID';
 import { hash } from '@/lib/hash';
 import { useRouter } from 'next/navigation';
+import { websocket } from '@/lib/websocket';
 
 export const EditProfile = () => {
-    const { xumm, user, gravatar, store, account } = useUser();
+    const { xumm, user, gravatar, store, info, tx, obj } = useUser();
 
     const { register, handleSubmit, watch, setValue } = useForm<UserProfile>({
         defaultValues: {
             account: user.account,
+            age: store?.age,
             avatar: store?.avatar || gravatar || user.picture,
-            name: store?.name || user.name,
-            url: store?.url || (user.domain ? "https://" + user?.domain : undefined),
-            did: store?.did || ("did:xrpl:" + user?.account),
-            uuid: store?.uuid || crypto.randomUUID(),
-            email: store?.email,
             bio: store?.bio,
+            country: store?.country,
+            currency: store?.currency,
+            did: store?.did,
+            gender: store?.gender,
+            email: store?.email,
+            job: store?.job,
+            lang: store?.lang,
+            locate: store?.locate,
+            name: store?.name,
             paystring: store?.paystring,
             tel: store?.tel,
-            gender: store?.gender,
-            age: store?.age,
-            locate: store?.locate,
-            currency: store?.currency,
-            lang: store?.lang,
+            url: store?.url,
+            uuid: store?.uuid,
             sns: store?.sns,
-            job: store?.job,
-            country: store?.country
         }
     });
     const [isEditing, setIsEditing] = useState(false);
@@ -38,19 +39,59 @@ export const EditProfile = () => {
     // const [favorited, setFavorited] = useState(false);
     const [scale, setScale] = useState(1);
     const editorRef = useRef<AvatarEditor | null>(null);
+    const [rinfo, setInfo] = useState(info)
+    const [rtx, setTx] = useState(tx)
+    const [robj, setObj] = useState(obj)
     const router = useRouter()
 
     const onSubmit = async (data: UserProfile) => {
         Object.keys(data).forEach(key => {
             const typedKey = key as keyof UserProfile;
             if (data[typedKey] === '') {
-                data[typedKey] = undefined;
+                data[typedKey] = null;
             }
         });
-        const id = await hash(user.account)
-        await xumm.userstore?.set(id, data);
-        setIsEditing(false)
+        const put = await fetch(`/api/${data.account}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${process.env.TOKEN}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name: data?.name,
+                age: data?.age,
+                avatar: data?.avatar,
+                bio: data?.bio,
+                currency: data?.currency,
+                country: data?.country,
+                email: data?.email,
+                gender: data?.gender,
+                job: data?.job,
+                lang: data?.lang,
+                locate: data?.locate,
+                url: data?.url,
+                tel: data?.tel,
+                sns: data?.sns,
+            }),
+        });
 
+        const update = await put.json()
+        const setData = update.result
+
+        Object.keys(setData).forEach(key => {
+            const typedKey = key as keyof UserProfile;
+            if (setData[typedKey] === null) {
+                setData[typedKey] = undefined;
+            }
+        });
+        // console.log(setData)
+        const id = await hash(user.account)
+        await xumm.userstore?.set(id, setData);
+        setIsEditing(false)
+        const ws = await websocket(user.account!, user.networkEndpoint!)
+        setInfo(ws!.info)
+        setTx(ws!.tx)
+        setObj(ws!.obj)
         router.refresh()
     };
 
@@ -217,21 +258,21 @@ export const EditProfile = () => {
                             {...register('age')}
                         />
                     </div>
-                        <label className="label">
-                            <span className="label-text">Gender</span>
-                        </label>
-                        <div className="input input-bordered flex justify-between">
+                    <label className="label">
+                        <span className="label-text">Gender</span>
+                    </label>
+                    <div className="input input-bordered flex justify-between">
                         <label className="label cursor-pointer">
                             <span className="label-text">female</span>
-                            <input type="radio" value="female" id="female" className="radio checked:bg-red-500" checked {...register('gender')} />
+                            <input type="radio" value="female" id="female" className="radio checked:bg-red-500" checked={watch("gender") === 'female'} {...register('gender')} />
                         </label>
                         <label className="label cursor-pointer">
                             <span className="label-text">male</span>
-                            <input type="radio" value="male" id="male" className="radio checked:bg-blue-500" checked {...register('gender')} />
+                            <input type="radio" value="male" id="male" className="radio checked:bg-blue-500" checked={watch("gender") === 'male'} {...register('gender')} />
                         </label>
                         <label className="label cursor-pointer">
                             <span className="label-text">none</span>
-                            <input type="radio" value="" id="none" className="radio checked:bg-gray-500" checked {...register('gender')} />
+                            <input type="radio" value="" id="none" className="radio checked:bg-gray-500" checked={watch("gender") === ""} {...register('gender')} />
                         </label>
                     </div>
                     <div className="form-control">
@@ -311,7 +352,7 @@ export const EditProfile = () => {
                         />
                     </div>
                     <div className='text-lg truncate'>
-                        {(account.account_data?.Balance / 1000000) || ""} XRP
+                        {(info.account_data?.Balance / 1000000) || ""} XRP
                     </div>
                     <div className="flex items-center justify-center">
                         <div id="account" className="truncate">
@@ -329,28 +370,28 @@ export const EditProfile = () => {
                         {user.networkEndpoint}
                     </div>
 
-                    <div className='text-left m-4 p-4 border-2 border-primary rounded-box overflow-scroll whitespace-nowrap'>
-                        <p>{watch("name") && "name: "}{watch("name")}</p>
-                        <p className='block'>{watch("url") && "url: "}
-                            <a href={watch("url")} className="underline">{formatUrlForDisplay(watch("url"))}</a>
-                        </p>
-                        <p>{watch("locate") && "locate: "}{watch("locate")}</p>
-                        <p>{watch("lang") && "lang: "}{watch("lang")}</p>
-                        <p>{watch("currency") && "currency: "}{watch("currency")}</p>
-                        <p>{watch("email") && "email: "}{watch("email")}</p>
-                        <p>{watch("tel") && "tel: "}{watch("tel")}</p>
-                        <p>{watch("sns") && "sns: "}{watch("sns")}</p>
-                        <p>{watch("gender") && "gender: "}{watch("gender")}</p>
-                        <p>{watch("age") && "age: "}{watch("age")}</p>
-                        <p>{watch("bio") && "bio: "}{watch("bio")}</p>
-                        <p>{watch("did") && "did: "}{watch("did")}</p>
-                        <p>{watch("country") && "country: "}{watch("country")}</p>
-                        <p>{watch("job") && "did: "}{watch("job")}</p>
-                        <p>{watch("uuid") && "uuid: "}{watch("uuid")}</p>
-                    </div>
+                    <dl className='text-left m-4 p-4 border-2 border-primary rounded-box overflow-scroll whitespace-nowrap'>
+                        <dd>{watch("name") && "name: "}{watch("name")}</dd>
+                        <dd className='block'>{watch("url") && "url: "}
+                            <a href={watch("url")!} className="underline">{formatUrlForDisplay(watch("url")!)}</a>
+                        </dd>
+                        <dd>{watch("email") && "email: "}{watch("email")}</dd>
+                        <dd>{watch("tel") && "tel: "}{watch("tel")}</dd>
+                        <dd>{watch("sns") && "sns: "}{watch("sns")}</dd>
+                        <dd>{watch("locate") && "locate: "}{watch("locate")}</dd>
+                        <dd>{watch("country") && "country: "}{watch("country")}</dd>
+                        <dd>{watch("lang") && "lang: "}{watch("lang")}</dd>
+                        <dd>{watch("currency") && "currency: "}{watch("currency")}</dd>
+                        <dd>{watch("age") && "age: "}{watch("age")}</dd>
+                        <dd>{watch("gender") && "gender: "}{watch("gender")}</dd>
+                        <dd>{watch("job") && "job: "}{watch("job")}</dd>
+                        <dd>{watch("bio") && "bio: "}{watch("bio")}</dd>
+                        <dd>{watch("did") && "did: "}{watch("did")}</dd>
+                        {/* <dd>{watch("uuid") && "uuid: "}{watch("uuid")}</dd> */}
+                    </dl>
 
                     <button
-                        className="md:btn-lg text-xl btn btn-primary mx-auto w-80"
+                        className="text-xl btn btn-primary mx-auto w-80"
                         onClick={() => setIsEditing(true)}
                     >
                         Edit Profile
@@ -365,7 +406,31 @@ export const EditProfile = () => {
                             </summary>
                             <div className="collapse-content text-left">
                                 <pre className="text-success text-xs overflow-scroll">
-                                    account_info: {JSON.stringify(account, null, 2)}
+                                    result: {JSON.stringify(rinfo, null, 2)}
+                                </pre>
+                            </div>
+                        </details>
+                    </div>
+                    <div className='stat'>
+                        <details className="collapse collapse-arrow border border-primary bg-base-100">
+                            <summary className="collapse-title text-2xl">
+                                DID Tx
+                            </summary>
+                            <div className="collapse-content text-left">
+                                <pre className="text-success text-xs overflow-scroll">
+                                    {JSON.stringify(rtx, null, 2)}
+                                </pre>
+                            </div>
+                        </details>
+                    </div>
+                    <div className="stat">
+                        <details className="collapse collapse-arrow border border-primary bg-base-100">
+                            <summary className="collapse-title text-2xl">
+                                DID Object
+                            </summary>
+                            <div className="collapse-content text-left">
+                                <pre className="text-success text-xs overflow-scroll">
+                                    {JSON.stringify(robj, null, 2)}
                                 </pre>
                             </div>
                         </details>

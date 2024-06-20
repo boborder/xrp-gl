@@ -37,7 +37,7 @@ XUMMAPI={API Key}
 XUMMSECRET={Secret}
 DATABASE_URL={DB URL}
 PINATA_JWT={Pinata JWT}
-SEED={ペイチャン用Wallet seed}
+SEED={ペイチャン用 seed}
 TOKEN={認証用トークン}
 
 ```
@@ -72,16 +72,27 @@ docker-compose up
 - xrplの公式サイト
 ### [xrpl.js](https://js.xrpl.org)
 - xrplのクライアントライブラリ
-### [Xumm Developer](https://docs.xumm.dev/)
+### [Xumm Developer](https://docs.xumm.dev)
 - xumm sdk, xappの開発用
 ### [XRPL Standards](https://github.com/XRPLF/XRPL-Standards/discussions)
 - xrplの新機能についての提案や仕様のディスカッション
+### [DID](https://www.w3.org/TR/2022/REC-did-core-20220719/)
+- 自己主張型の分散型識別子 W3C RFC
+### [Paystring](https://raw.githubusercontent.com/PayString/rfcs)
+- URLやメールアドレスに似た形式の送金用の宛先アドレス
 
 ### [Next.js](https://nextjs.org/docs)
 - バックエンドも使えるreactの多機能フレームワーク
 ### [cloudflare pages](https://developers.cloudflare.com/pages/)
 - 静的サイトまたはサーバーレスのデプロイ先のプラットフォーム
-### [tailwindcss](https://tailwindcss.com/docs/installation)
+### [tailwindcss](https://tailwindcss.com/docs)
 - cssをインラインスタイルで記述できる
-### [daisyUI](https://daisyui.com/components/)
-- tailwindcssのコンポーネントが用意されていてレスポンシブ対応
+
+### [bun](https://bun.sh/docs)
+- node.jsの代わりの高速なJavascript Runtime
+### [Drizzle-orm](https://orm.drizzle.team/docs)
+- sqlライクに書けるデータベースクエリ用jsライブラリ
+### [Neon](https://neon.tech/docs)
+- サーバーレスに対応したPostgresSQLサービス
+### [Hono](https://hono.dev/docs)
+- マルチランタイム対応の高速で軽量なバックエンドフレームワーク

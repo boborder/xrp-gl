@@ -4,88 +4,137 @@ import { useState } from "react";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
 import { createPayload } from "@/lib/payload";
-import { Client, Wallet, signPaymentChannelClaim, verifyPaymentChannelClaim, } from 'xrpl'
-import BigNumber from 'bignumber.js'
+import { AccountChannelsResponse, AccountTxResponse, Client, Transaction, TxResponse, Wallet, getBalanceChanges, signPaymentChannelClaim, verifyPaymentChannelClaim, } from 'xrpl'
+import { useRouter } from "next/navigation";
+import { Decode, Encode } from "xrpl-tagged-address-codec";
+import { CryptoHasher } from "bun";
+import { hash } from "@/lib/hash";
 
 export const Payment = () => {
   const { xumm, user } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
+  const [data, setData] = useState<any | undefined>(undefined);
   const [channel, setChannel] = useState<string | undefined>(undefined);
-  const [sign, setSign] = useState<string | undefined>(undefined);
-  const [prog, setProg] = useState<boolean | null>(null);
+  const [prog, setProg] = useState<boolean>(false);
   const signature = Wallet.fromSeed(process.env.SEED!);
-  console.log(signature.privateKey + '/' + signature.publicKey)
+  const router = useRouter()
 
-  const handlePayloadStatus = async (uuid?: any) => {
-    const checkPayloadStatus = setInterval(async () => {
-      const status: any = await xumm.payload?.get(uuid as string);
-      if (status?.meta.resolved && !status?.meta.cancelled) {
-        clearInterval(checkPayloadStatus);
-        setTx(status);
-        setQr(undefined);
-      }
-    }, 10000);
+  const handlePayloadStatus = async (uuid: string) => {
+    if (uuid) {
+      const checkPayloadStatus = setInterval(async () => {
+        const status = await xumm.payload?.get(uuid);
+        if (status?.meta.resolved) {
+          clearInterval(checkPayloadStatus);
+          setTx(status);
+          setData(status.payload);
+          setQr(undefined);
+          if (status.meta.signed === true) {
+
+            const client = new Client(user.networkEndpoint!)
+            await client.connect();
+            const tx: AccountTxResponse = await client.request({
+              command: "account_tx",
+              account: user.account!,
+              ledger_index_max: -1,
+              limit: 1,
+            });
+            if (tx) {
+              const txData = tx.result.transactions[0].tx
+              // console.log(txData)
+              setData(txData)
+            }
+
+            const response: AccountChannelsResponse = await client.request({
+              command: 'account_channels',
+              account: user.account!,
+            });
+            if (response) {
+              // channels配列の最後の要素を取得
+              const channels = response.result.channels;
+              console.log(channels)
+              const channel_id = channels[channels.length - 1].channel_id;
+              console.log("Channel_id: " + channel_id);
+              setChannel(channel_id);
+              await client.disconnect()
+              setProg(true)
+            }
+          }
+        }
+      }, 10000);
+    }
   };
 
-  const paychanCreate = async () => {
-    const create = await createPayload({
+  const channelCreate = async () => {
+    const rip = await hash(user.account!)
+    const hashInt = BigInt("0x" + rip)
+    const hashtag = hashInt % BigInt(1234567890)
+
+    const tagged = Encode({ account: 'rTTPiTzEy729zHn3MFvEELL5e54fr13ub', tag: hashtag.toString() })
+    console.log(tagged)
+    const untagged = Decode(tagged)
+    console.log(untagged)
+
+    const payload = await createPayload({
       TransactionType: 'PaymentChannelCreate',
-      Destination: "r44444Q525rRY3hiwgwjP9zN1R8Z8QQ7oc",
+      Destination: "rTTPiTzEy729zHn3MFvEELL5e54fr13ub",
+      DestinationTag: hashtag,
       Amount: String(12_345_678),
       SettleDelay: 86400,
       PublicKey: signature.publicKey,
     });
-    setQr(create.qr)
-    handlePayloadStatus(create.uuid)
-    setProg(false)
+    if (payload) {
+      handlePayloadStatus(payload.uuid)
+      setQr(payload.qr)
+    }
   }
-  const paychanSign = async () => {
+
+  const channelAuth = async () => {
     // ChannelIDの取得
-    const client = new Client('wss://testnet.xrpl-labs.com')
-    await client.connect();
-
-    const response = await client.request({
-      command: 'account_channels',
-      account: user.account!,
-    })
-    console.log(response.result.channels[0].channel_id)
-    const channel_id = response.result.channels[0].channel_id
-    setChannel(channel_id)
-
     const amount = "12345678"
     // 送金人: オフレジャー支払いへの署名
-    const paychanSignature = signPaymentChannelClaim(channel_id, amount, signature.privateKey)
-    console.log(paychanSignature)
-    setSign(paychanSignature)
-    // 受取人: オフレジャー支払い情報の検証
-    if (!verifyPaymentChannelClaim(channel_id, amount, paychanSignature, signature.publicKey)) {
-      throw new Error('Invalid signature')
-    }
+    if (channel) {
+      const paychanSignature = signPaymentChannelClaim(channel, amount, signature.privateKey)
+      console.log("Signature: " + paychanSignature)
 
-    const response2 = await client.request({
-      command: 'account_channels',
-      account: user.account!,
-    })
-    console.log(response2.result)
-    setProg(true)
-    await client.disconnect()
+      // 受取人: オフレジャー支払い情報の検証
+      if (!verifyPaymentChannelClaim(channel, amount, paychanSignature, signature.publicKey)) {
+        throw new Error('Invalid signature')
+      }
+
+      const client = new Client(user.networkEndpoint!)
+      await client.connect();
+      const wallet = Wallet.fromSeed("sEd7ufdKWHmduLNzudXRZXKC2xPL4T2")
+      // トランザクション
+      const txForm: Transaction = await client.autofill({
+        TransactionType: 'PaymentChannelClaim',
+        Account: wallet.address,
+        Channel: channel,
+        Balance: amount,
+        Amount: amount,
+        // Signature: paychanSignature,
+        PublicKey: signature.publicKey,
+      });
+
+      // トランザクションに署名。
+      const signed = wallet.sign(txForm);
+
+      //トランザクションを送信し、結果を待ちます。
+      const data: TxResponse = await client.submitAndWait(signed.tx_blob);
+      console.log(data)
+      setData(data);
+      await client.disconnect();
+    }
   }
-  const paychanClaim = async () => {
-    const claim = await createPayload({
-      TransactionType: 'PaymentChannelClaim',
-      Channel: channel,
-      Balance: String(12_345_678),
-      Amount: String(12_345_678),
-      Signature: sign,
-      PublicKey: signature.publicKey,
-    });
-    setQr(claim.uuid)
-    handlePayloadStatus(claim.uuid)
-  }
+
+  const Signin = async () => {
+    await xumm.authorize();
+    router.push(`/profile/${user.account || "user"}`)
+  };
+
   return (
     <>
-      {user.account && (
+      {user.account ? (
         <>
           {qr || tx ? (
             <>
@@ -104,27 +153,21 @@ export const Payment = () => {
               {tx &&
                 <>
                   <div className="stat">
-                    <details className="collapse collapse-arrow border border-base-300 bg-base-100">
+                    <details className="collapse collapse-arrow border border-primary bg-base-100">
                       <summary className="collapse-title text-accent">
                         {tx.response.resolved_at}
                       </summary>
                       <div className="collapse-content text-left">
                         <pre className="text-success text-xs overflow-scroll">
-                          payload: {JSON.stringify(tx.payload, null, 2)}
+                          {JSON.stringify(data, null, 2)}
                         </pre>
                       </div>
                     </details>
                   </div>
-                  {(prog === true) ? (
+                  {prog && (
                     <div className="stat">
-                      <button onClick={paychanClaim} className="my-3 mx-auto btn btn-primary text-xl min-w-64" >
-                        PaymentChannelClaim
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="stat">
-                      <button onClick={paychanSign} className="my-3 mx-auto btn btn-primary text-xl min-w-64">
-                        PaymentChannelOffline
+                      <button onClick={channelAuth} className="my-3 mx-auto btn btn-primary text-xl">
+                        ChannelAuthorize
                       </button>
                     </div>
                   )}
@@ -133,13 +176,25 @@ export const Payment = () => {
             </>
           ) : (
             <div className="stat">
-              <button onClick={paychanCreate} className="my-3 mx-auto btn btn-primary text-xl min-w-64">
+              <button onClick={channelCreate} className="my-3 mx-auto btn btn-primary text-xl">
                 PaymentChannelCreate
               </button>
             </div>
           )}
         </>
-      )}
+      ) : (
+        <div className="stat">
+          <div onClick={Signin} className="mx-auto my-3">
+            <Imag
+              src={"/ipfs/sign-in-with-xumm.png"}
+              width={360}
+              height={100}
+              alt="sign"
+            />
+          </div>
+        </div>
+      )
+      }
     </>
   );
 };

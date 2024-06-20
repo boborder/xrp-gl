@@ -6,7 +6,6 @@ export const hash = async (text: string | undefined) => {
     const shaHex = Array.from(new Uint8Array(shaBuffer))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
-        
     const ripBuffer = ripemd160(encoder.encode(shaHex));
     const ripHex = Array.from(new Uint8Array(ripBuffer))
         .map((b) => b.toString(16).padStart(2, "0"))

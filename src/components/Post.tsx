@@ -11,12 +11,14 @@ export const Post = () => {
         const formData = new FormData(event.currentTarget);
         const name = formData?.get("name") || await hash(crypto.randomUUID());
         const account = formData?.get("account") || (Wallet.generate().classicAddress);
+
         const age = store?.age
         const avatar = store?.avatar
         const bio = store?.bio
         const currency = store?.currency
         const country = store?.country
         const did = store?.did
+        const email = store?.email
         const gender = store?.gender
         const job = store?.job
         const lang = store?.lang
@@ -28,8 +30,7 @@ export const Post = () => {
         // const name = store?.name
         // const account = user.account
 
-        const response = await fetch("/api/post", {
-        // const response = await fetch("/api/set", {
+        const data = await fetch(`/api/${account}`, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${process.env.TOKEN}`,
@@ -37,13 +38,13 @@ export const Post = () => {
             },
             body: JSON.stringify({
                 name,
-                account,
                 age,
                 avatar,
                 bio,
                 currency,
                 country,
                 did,
+                email,
                 gender,
                 job,
                 lang,
@@ -54,9 +55,10 @@ export const Post = () => {
                 sns,
             }),
         });
-
-        const data: any = await response.json();
-        console.log(data[0]);
+        if (data) {
+            const res = await data.json()
+            console.log(res.result);
+        }
     };
 
     return (

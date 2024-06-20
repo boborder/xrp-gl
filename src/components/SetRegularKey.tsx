@@ -4,48 +4,69 @@ import { useState } from "react";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
 import { createPayload } from "@/lib/payload";
-import { convertStringToHex } from 'xrpl';
+import { AccountTxResponse, Client } from 'xrpl';
 
 export const SetRegularKey = () => {
   const { xumm, user } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
+  const [data, setData] = useState<any | undefined>(undefined);
 
-  const handlePayloadStatus = async (payload?: any) => {
-    const checkPayloadStatus = setInterval(async () => {
-      const status: any = await xumm.payload?.get(payload?.uuid as string);
-      if (status?.meta.resolved && !status?.meta.cancelled && (!tx || !status?.meta.cancelled)) {
-        clearInterval(checkPayloadStatus);
-        setTx(status);
-        setQr(undefined);
-      }
-    }, 10000);
+  const handlePayloadStatus = async (uuid: string) => {
+    if (uuid) {
+      const checkPayloadStatus = setInterval(async () => {
+        const status = await xumm.payload?.get(uuid);
+        if (status?.meta.resolved) {
+          clearInterval(checkPayloadStatus);
+          setTx(status);
+          setData(status.payload);
+          setQr(undefined);
+          if (status.meta.signed === true) {
+            const client = new Client(user.networkEndpoint!);
+            await client.connect();
+            const tx: AccountTxResponse = await client.request({
+              command: "account_tx",
+              account: user.account!,
+              ledger_index_max: -1,
+              limit: 1,
+              tx_type: "SetRegularKey",
+            });
+            if (tx) {
+              const txData = tx.result.transactions[0].tx
+              // console.log(txData)
+              setData(txData)
+            }
+            await client.disconnect()
+          }
+        }
+      }, 10000);
+    }
   };
 
   const setRegularKey = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const setkey = event.currentTarget.key.value;
-    const keyhex = convertStringToHex(setkey)
+    const setKey = event.currentTarget.key.value;
     const payload = await createPayload({
-      // Flags: 0,
       TransactionType: 'SetRegularKey',
       // Account: user.account,
-      RegularKey: setkey,
-      // RegularKey: keyhex
+      RegularKey: setKey,
     });
-    setQr(payload.qr)
-    handlePayloadStatus(payload.uuid)
+    if (payload) {
+      setQr(payload.qr)
+      handlePayloadStatus(payload.uuid)
+    }
   }
 
   const setBlackHole = async () => {
     const payload = await createPayload({
-            // Flags: 0,
       TransactionType: 'SetRegularKey',
-          // Account: user.account,
+      // Account: user.account,
       RegularKey: 'rrrrrrrrrrrrrrrrrrrrBZbvji',
     });
-    setQr(payload.qr)
-    handlePayloadStatus(payload.uuid)
+    if (payload) {
+      setQr(payload.qr)
+      handlePayloadStatus(payload.uuid)
+    }
   }
 
   return (
@@ -68,13 +89,13 @@ export const SetRegularKey = () => {
 
               {tx &&
                 <div className="stat xs:w-64">
-                  <details className="stat-desc collapse collapse-arrow border border-base-300 bg-base-100">
-                    <summary className="collapse-title text-accent">
+                  <details className="stat-desc collapse collapse-arrow border border-primary bg-base-100">
+                    <summary className="collapse-title text-accent text-xl">
                       {tx.response.resolved_at}
                     </summary>
                     <div className="collapse-content text-left">
                       <pre className="text-success text-xs overflow-scroll">
-                        payload: {JSON.stringify(tx.payload, null, 2)}
+                        {JSON.stringify(data, null, 2)}
                       </pre>
                     </div>
                   </details>

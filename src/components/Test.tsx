@@ -1,31 +1,14 @@
 "use client"
 
 import { ComponentProps, useState, useEffect } from "react";
-import { Wallet, Client, xrpToDrops, getBalanceChanges, Transaction, convertStringToHex } from 'xrpl';
-
-type WalletData = {
-    address: string;
-    publicKey: string;
-    privateKey: string;
-    seed: string;
-    balance: number;
-};
+import { Wallet, Client, xrpToDrops, getBalanceChanges, Transaction, convertStringToHex, AccountInfoResponse, TxResponse } from 'xrpl';
 
 export const Test = () => {
-    // 初期値
-    const initialWallet = {
-        address: "",
-        publicKey: "",
-        privateKey: "",
-        seed: "",
-        balance: 0,
-    };
-
     // ウォレットのデータを入れるstateを作成
-    const [wallet, setWallet] = useState<WalletData>(initialWallet);
+    const [wallet, setWallet] = useState<Wallet | undefined>(undefined);
     const [stats, setStats] = useState<string | undefined>("TxData");
-    const [raw, setRaw] = useState<string | undefined>(undefined);
-    const [info, setInfo] = useState<string | undefined>(undefined);
+    const [raw, setRaw] = useState<TxResponse | undefined>(undefined);
+    const [info, setInfo] = useState<AccountInfoResponse | undefined>(undefined);
 
     const ws = "wss://s.devnet.rippletest.net:51233"
     // const ws = "wss://testnet.xrpl-labs.com"
@@ -36,35 +19,22 @@ export const Test = () => {
 
     // アカウントを作成する関数
     const createAccount = async () => {
+        if (wallet === undefined) {
+            const client = new Client(ws);
+            await client.connect();
+            // 新しいウォレットを作成
+            const newWallet = (await client.fundWallet()).wallet;
+            setWallet(wallet);
 
-        const client = new Client(ws);
-        await client.connect();
+            const info: AccountInfoResponse = await client.request({
+                command: "account_info",
+                account: newWallet.address,
+            });
+            setInfo(info)
 
-        // 新しいウォレットを作成
-        const wallet = (await client.fundWallet()).wallet;
-
-        // 残高を取得
-        const balance = await client.getXrpBalance(wallet.address);
-
-        // 表示するウォレットのデータを定義
-        const newWallet = {
-            address: wallet.address,
-            publicKey: wallet.publicKey,
-            privateKey: wallet.privateKey,
-            seed: wallet.seed!,
-            balance: balance,
-        };
-
-        const info = await client.request({
-            command: "account_info",
-            account: wallet.address,
-        });
-
-        // XRP Ledger Test Net との接続を解除
-        await client.disconnect();
-
-        setWallet(newWallet);
-        setInfo(JSON.stringify(info, null, 2))
+            // XRP Ledger Test Net との接続を解除
+            await client.disconnect();
+        }
     };
 
     // seedをを使い既存のウォレットを取得する関数
@@ -73,69 +43,50 @@ export const Test = () => {
         // 入力されたseedの文字列を使ってリクエストを送る
         const seed: string = event.currentTarget.seed.value;
 
-        // XRP Ledger Test Net に接続
         const client = new Client(ws);
         await client.connect();
 
         // seedで自身のアカウントを取得
-        const wallet = Wallet.fromSeed(seed);
+        const myWallet = Wallet.fromSeed(seed);
+        setWallet(myWallet);
 
-        // 残高を取得
-        const balance = await client.getXrpBalance(wallet.address);
-
-        // 表示するウォレットのデータを定義
-        const currentWallet = {
-            address: wallet.address,
-            seed: seed,
-            publicKey: wallet.publicKey,
-            privateKey: wallet.privateKey,
-            balance,
-        };
-        setWallet(currentWallet);
-
-        const info = await client.request({
+        const info: AccountInfoResponse = await client.request({
             command: "account_info",
-            account: wallet.address,
+            account: myWallet.address,
         });
-        setInfo(JSON.stringify(info, null, 2))
+        setInfo(info)
 
         // XRP Ledger Test Net との接続を解除
         await client.disconnect();
     };
-    // XRPを送金する関数
+
+
     const transfer: ComponentProps<"form">["onSubmit"] = async (event) => {
         event.preventDefault();
-
-        // 送金金額を定義
+        // 送金金額
         const amount = event.currentTarget.amount.value;
-
-        // 送金先のアドレスを定義
+        // 送金先
         const destination = event.currentTarget.destination.value;
 
-        // XRP Ledger Test Net に接続
         const client = new Client(ws);
         await client.connect();
-
-        // seedで自身のアカウントを取得
-        const mywallet = Wallet.fromSeed(wallet.seed);
 
         // トランザクションを準備
         const txForm: Transaction = await client.autofill({
             TransactionType: "Payment",
-            Account: mywallet.address, // 送金するの自身のウォレットアドレス
-            Amount: xrpToDrops(amount), // 送金金額
-            Destination: destination, // 送信先のウォレットアドレス
+            Account: wallet!.address,
+            Amount: xrpToDrops(amount),
+            Destination: destination,
         });
 
         // 準備されたトランザクションに署名。
-        const signed = mywallet.sign(txForm);
+        const signed = wallet!.sign(txForm);
 
         //トランザクションを送信し、結果を待ちます。
-        const tx = await client.submitAndWait(signed.tx_blob);
+        const tx: TxResponse = await client.submitAndWait(signed.tx_blob);
         // console.log(tx)
-        setRaw(JSON.stringify(tx, null, 2));
+        setRaw(tx);
 
-        // トランザクションによって生じた変更を取得
         let changeData;
         let stats;
         if (tx.result.meta !== undefined && typeof tx.result.meta !== "string") {
@@ -145,15 +96,11 @@ export const Test = () => {
         console.log(changeData)
         setStats(stats!);
 
-        // 送金後残高
-        const balance = await client.getXrpBalance(mywallet.address);
-        setWallet({ ...wallet, balance: balance });
-
-        const info = await client.request({
+        const info: AccountInfoResponse = await client.request({
             command: "account_info",
-            account: wallet.address,
+            account: wallet!.address,
         });
-        setInfo(JSON.stringify(info, null, 2))
+        setInfo(info)
 
         await client.disconnect();
     };
@@ -163,55 +110,92 @@ export const Test = () => {
 
         const dataHex = convertStringToHex(event.currentTarget.data.value)
 
-        // XRP Ledger Test Net に接続
         const client = new Client(ws);
         await client.connect();
 
-        const mywallet = Wallet.fromSeed(wallet.seed);
-
-        const id = `did:xrpl:0:${wallet.address}`
+        const id = `did:xrpl:0:${wallet!.address}`
         const document = {
-          "@context": "https://www.w3.org/ns/did/v1",
-          "id": id,
-          "publicKey": [{
+            "@context": "https://www.w3.org/ns/did/v1",
             "id": id,
-            "type": "Secp256k1VerificationKey2018",
-            "controller": id,
-            "publicKeyHex": convertStringToHex(id)
-          }],
-          "assertionMethod": [id],
-          "authentication": [id]
+            "publicKey": [{
+                "id": id,
+                "type": "Secp256k1VerificationKey2018",
+                "controller": id,
+                "publicKeyHex": convertStringToHex(id)
+            }],
+            "assertionMethod": [id],
+            "authentication": [id]
         }
 
         try {
-          const text = JSON.stringify(document);
-          const blob = new Blob([text], { type: "application/json" });
-          const data = new FormData();
-          data.append("file", blob, "document.json");
+            const text = JSON.stringify(document);
+            const blob = new Blob([text], { type: "application/json" });
+            const data = new FormData();
+            data.append("file", blob, "document.json");
 
-          const res = await fetch("/api/pinata", {
-            method: "POST",
-            body: data,
-          });
+            const res = await fetch("/api/pinata", {
+                method: "POST",
+                body: data,
+            });
 
-          const cid = await res.json();
-          const uri = convertStringToHex("ipfs:" + cid)
+            const cid = await res.json();
+            const uri = convertStringToHex("ipfs:" + cid)
+
+            // トランザクションを準備
+            const txForm: Transaction = await client.autofill({
+                TransactionType: "DIDSet",
+                Account: wallet!.address, // 送金するの自身のウォレットアドレス
+                URI: convertStringToHex(uri),
+                Data: dataHex
+            });
+
+            // 準備されたトランザクションに署名。
+            const signed = wallet!.sign(txForm);
+
+            //トランザクションを送信し、結果を待ちます。
+            const tx: TxResponse = await client.submitAndWait(signed.tx_blob);
+            console.log(tx)
+            setRaw(tx);
+
+            let stats;
+            if (tx.result.meta !== undefined && typeof tx.result.meta !== "string") {
+                stats = tx.result.meta.TransactionResult
+            }
+            setStats(stats!);
+
+            const info: AccountInfoResponse = await client.request({
+                command: "account_info",
+                account: wallet!.address,
+            });
+            setInfo(info)
+
+            await client.disconnect();
+        } catch (e) {
+            console.log(e);
+            alert("Trouble uploading document");
+        }
+    };
+
+    const setRegularKey = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const setkey = event.currentTarget.key.value;
+        const client = new Client(ws);
+        await client.connect();
 
         // トランザクションを準備
         const txForm: Transaction = await client.autofill({
-            TransactionType: "DIDSet",
-            Account: mywallet.address, // 送金するの自身のウォレットアドレス
-            URI: convertStringToHex(uri),
-            Data: dataHex
+            TransactionType: 'SetRegularKey',
+            Account: wallet!.classicAddress,
+            RegularKey: setkey || "r44444Q525rRY3hiwgwjP9zN1R8Z8QQ7oc",
         });
 
         // 準備されたトランザクションに署名。
-        const signed = mywallet.sign(txForm);
+        const signed = wallet!.sign(txForm);
 
         //トランザクションを送信し、結果を待ちます。
-        const tx = await client.submitAndWait(signed.tx_blob);
+        const tx: TxResponse = await client.submitAndWait(signed.tx_blob);
         console.log(tx)
-        setRaw(JSON.stringify(tx, null, 2));
+        setRaw(tx);
 
         let stats;
         if (tx.result.meta !== undefined && typeof tx.result.meta !== "string") {
@@ -219,20 +203,35 @@ export const Test = () => {
         }
         setStats(stats!);
 
-        const info = await client.request({
-            command: "account_info",
-            account: wallet.address,
+        const regWallet = Wallet.fromSeed("sEdVc2eVRWWzCSpe8UuxJHuuQa1yQDP")
+
+        const sign: Transaction = await client.autofill({
+            TransactionType: 'Payment',
+            Account: wallet!.address,
+            Amount: "12345678",
+            Destination: "r44444Q525rRY3hiwgwjP9zN1R8Z8QQ7oc"
         });
-        setInfo(JSON.stringify(info, null, 2))
+        // 準備されたトランザクションに署名。
+        const signedd = regWallet.sign(sign);
 
-        // XRP Ledger Test Net との接続を解除
-        await client.disconnect();
-        } catch (e) {
-          console.log(e);
-          alert("Trouble uploading document");
+        //トランザクションを送信し、結果を待ちます。
+        const submit: TxResponse = await client.submitAndWait(signedd.tx_blob, { wallet: regWallet });
+        console.log(submit)
+        setRaw(submit);
+
+        if (submit.result.meta !== undefined && typeof submit.result.meta !== "string") {
+            stats = submit.result.meta.TransactionResult
         }
-    };
+        setStats(stats!);
 
+        const info: AccountInfoResponse = await client.request({
+            command: "account_info",
+            account: wallet!.address,
+        });
+        setInfo(info)
+
+        await client.disconnect();
+    }
     return (
         <>
             <div className="stats stats-vertical sm:stats-horizontal w-full">
@@ -256,7 +255,7 @@ export const Test = () => {
                 {/* シードから作成 */}
                 <div className="stat">
                     <label className="text-2xl text-accent">
-                        Seed to account
+                        Account from seed
                     </label>
                     <label className="my-4">
                         Get an existing account (r...)
@@ -278,7 +277,7 @@ export const Test = () => {
 
             </div>
 
-            {wallet.address && (<>
+            {wallet && (<>
                 <div className="stats w-full">
                     <div className="stat">
                         <label className="text-2xl text-accent">
@@ -294,16 +293,18 @@ export const Test = () => {
                             <dt className="font-medium">privateKey:</dt>
                             <dd className="text-accent"> {wallet?.privateKey}</dd>
                             <dt className="font-medium">balance:</dt>
-                            <dd className="text-accent"> {wallet?.balance}</dd>
+                            <dd className="text-accent"> {info?.result.account_data.Balance}</dd>
                         </dl>
-                        <details className="mt-4 collapse collapse-arrow border border-base-300 bg-base-100">
-                            <summary className="collapse-title text-accent text-xl">
-                                Info
-                            </summary>
-                            <div className="collapse-content text-left">
-                                <pre className="text-success text-xs overflow-scroll">{info}</pre>
-                            </div>
-                        </details>
+                        {info && (
+                            <details className="mt-4 collapse collapse-arrow border border-base-300 bg-base-100">
+                                <summary className="collapse-title text-accent text-xl">
+                                    Info
+                                </summary>
+                                <div className="collapse-content text-left">
+                                    <pre className="text-success text-xs overflow-scroll">{JSON.stringify(info?.result, null, 2)}</pre>
+                                </div>
+                            </details>
+                        )}
                     </div>
                 </div>
 
@@ -348,16 +349,36 @@ export const Test = () => {
                             </div>
                             <button className="text-xl btn btn-primary join-item">Set</button>
                         </form>
-                        <details className="mt-4 collapse collapse-arrow border border-base-300 bg-base-100">
-                            <summary className="collapse-title text-xl text-accent">
-                                {stats}
-                            </summary>
-                            <div className="collapse-content text-left">
-                                <pre className="text-success text-xs overflow-scroll">{raw}</pre>
-                            </div>
-                        </details>
+
+                        {raw && (
+                            <details className="mt-4 collapse collapse-arrow border border-base-300 bg-base-100">
+                                <summary className="collapse-title text-xl text-accent">
+                                    {stats}
+                                </summary>
+                                <div className="collapse-content text-left">
+                                    <pre className="text-success text-xs overflow-scroll">{JSON.stringify(raw, null, 2)}</pre>
+                                </div>
+                            </details>
+                        )}
+
                     </div>
 
+                    <div className="stat">
+                        <label className="text-accent text-xl">
+                            RegularKey Set
+                        </label>
+                        <form onSubmit={setRegularKey} className="my-3 join join-vertical">
+                            <input
+                                type="text"
+                                name="key"
+                                id="key"
+                                placeholder="address(r...)"
+                                className="input input-bordered w-full join-item"
+                            />
+                            <button className="text-xl btn btn-primary join-item">setRegularKey</button>
+                        </form>
+                    </div>
+                    
                 </div>
             </>)}
         </>

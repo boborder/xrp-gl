@@ -5,7 +5,6 @@ import { Payload } from "@/components/Payload";
 import { GetName } from "@/components/GetName";
 import { Domain } from "@/components/Domain";
 import { Vanity } from "@/components/Vanity";
-import { Post } from "@/components/Post";
 
 export default function App() {
   return (
