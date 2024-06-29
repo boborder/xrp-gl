@@ -11,8 +11,8 @@ export const Auth = () => {
     const connect = async () => {
         try {
             await xumm.authorize();
-            window.location.reload()
-            router.push(`/profile/${user.account || "user"}`)
+            // window.location.reload()
+            router.push(`/profile/${user?.account || "user"}`)
         } catch (error) {
             console.error("Error during connection:", error);
         }
@@ -21,8 +21,8 @@ export const Auth = () => {
     const logout = async () => {
         try {
             await xumm.logout();
-            window.location.reload()
             router.push("/")
+            window.location.reload()
         } catch (error) {
             console.error("Error during logout:", error);
         }

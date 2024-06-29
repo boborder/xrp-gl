@@ -7,16 +7,15 @@ import { UserProfile, useUser } from "@/components/UserProvider"
 import { DID } from './DID';
 import { hash } from '@/lib/hash';
 import { useRouter } from 'next/navigation';
-import { websocket } from '@/lib/websocket';
 
 export const EditProfile = () => {
-    const { xumm, user, gravatar, store, info, tx, obj } = useUser();
+    const { xumm, user, gravatar, store, account } = useUser();
 
     const { register, handleSubmit, watch, setValue } = useForm<UserProfile>({
         defaultValues: {
-            account: user.account,
+            account: user?.account,
             age: store?.age,
-            avatar: store?.avatar || gravatar || user.picture,
+            avatar: store?.avatar || gravatar || user?.picture,
             bio: store?.bio,
             country: store?.country,
             currency: store?.currency,
@@ -39,9 +38,6 @@ export const EditProfile = () => {
     // const [favorited, setFavorited] = useState(false);
     const [scale, setScale] = useState(1);
     const editorRef = useRef<AvatarEditor | null>(null);
-    const [rinfo, setInfo] = useState(info)
-    const [rtx, setTx] = useState(tx)
-    const [robj, setObj] = useState(obj)
     const router = useRouter()
 
     const onSubmit = async (data: UserProfile) => {
@@ -57,22 +53,7 @@ export const EditProfile = () => {
                 "Authorization": `Bearer ${process.env.TOKEN}`,
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-                name: data?.name,
-                age: data?.age,
-                avatar: data?.avatar,
-                bio: data?.bio,
-                currency: data?.currency,
-                country: data?.country,
-                email: data?.email,
-                gender: data?.gender,
-                job: data?.job,
-                lang: data?.lang,
-                locate: data?.locate,
-                url: data?.url,
-                tel: data?.tel,
-                sns: data?.sns,
-            }),
+            body: JSON.stringify({...data}),
         });
 
         const update = await put.json()
@@ -85,13 +66,9 @@ export const EditProfile = () => {
             }
         });
         // console.log(setData)
-        const id = await hash(user.account)
+        const id = await hash(user?.account)
         await xumm.userstore?.set(id, setData);
         setIsEditing(false)
-        const ws = await websocket(user.account!, user.networkEndpoint!)
-        setInfo(ws!.info)
-        setTx(ws!.tx)
-        setObj(ws!.obj)
         router.refresh()
     };
 
@@ -352,11 +329,11 @@ export const EditProfile = () => {
                         />
                     </div>
                     <div className='text-lg truncate'>
-                        {(info.account_data?.Balance / 1000000) || ""} XRP
+                        {((account?.info?.result.account_data.Balance as unknown as number) / 1000000) || ""} XRP
                     </div>
                     <div className="flex items-center justify-center">
                         <div id="account" className="truncate">
-                            {user.account}
+                            {user?.account}
                         </div>
                         <button
                             className="btn-xs hover:bg-accent w-26 cursor-copy"
@@ -367,7 +344,7 @@ export const EditProfile = () => {
                         </button>
                     </div>
                     <div >
-                        {user.networkEndpoint}
+                        {user?.networkEndpoint}
                     </div>
 
                     <dl className='text-left m-4 p-4 border-2 border-primary rounded-box overflow-scroll whitespace-nowrap'>
@@ -406,7 +383,7 @@ export const EditProfile = () => {
                             </summary>
                             <div className="collapse-content text-left">
                                 <pre className="text-success text-xs overflow-scroll">
-                                    result: {JSON.stringify(rinfo, null, 2)}
+                                    result: {JSON.stringify(account?.info?.result, null, 2)}
                                 </pre>
                             </div>
                         </details>
@@ -418,7 +395,7 @@ export const EditProfile = () => {
                             </summary>
                             <div className="collapse-content text-left">
                                 <pre className="text-success text-xs overflow-scroll">
-                                    {JSON.stringify(rtx, null, 2)}
+                                    {JSON.stringify(account?.tx, null, 2)}
                                 </pre>
                             </div>
                         </details>
@@ -430,7 +407,7 @@ export const EditProfile = () => {
                             </summary>
                             <div className="collapse-content text-left">
                                 <pre className="text-success text-xs overflow-scroll">
-                                    {JSON.stringify(robj, null, 2)}
+                                    {JSON.stringify(account?.obj, null, 2)}
                                 </pre>
                             </div>
                         </details>

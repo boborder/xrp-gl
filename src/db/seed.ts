@@ -5,19 +5,19 @@ import { users } from "./schema";
 const seed = async () => {
   await db.insert(users).values([
     {
-      name: "Tanaka",
+      name: "alice",
       account: Wallet.generate().address,
-      email: "tanakakanant@gmail.com"
+      email: "alice@gmail.com"
     },
     {
-      name: "George",
+      name: "bob",
       account: Wallet.generate().address,
-      avatar: "https://avatar.com/avatar.png"
+      avatar: "https://avatar.com/bob.png"
     },
     {
-      name: "Katou",
+      name: "cat",
       account: Wallet.generate().address,
-      age: "33"
+      age: "13"
     },
   ]);
 }

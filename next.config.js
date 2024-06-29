@@ -12,6 +12,7 @@ module.exports = {
     PINATA_JWT: process.env.PINATA_JWT,
     TOKEN: process.env.TOKEN,
     SEED: process.env.SEED,
+    API: process.env.API,
   },
   async rewrites() {
     const gateway = "https://ipfs.io/ipfs/";

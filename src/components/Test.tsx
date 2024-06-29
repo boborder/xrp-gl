@@ -24,7 +24,7 @@ export const Test = () => {
             await client.connect();
             // 新しいウォレットを作成
             const newWallet = (await client.fundWallet()).wallet;
-            setWallet(wallet);
+            setWallet(newWallet);
 
             const info: AccountInfoResponse = await client.request({
                 command: "account_info",
@@ -75,7 +75,7 @@ export const Test = () => {
         const txForm: Transaction = await client.autofill({
             TransactionType: "Payment",
             Account: wallet!.address,
-            Amount: xrpToDrops(amount),
+            Amount: xrpToDrops(amount) || "10000000",
             Destination: destination,
         });
 
@@ -378,7 +378,7 @@ export const Test = () => {
                             <button className="text-xl btn btn-primary join-item">setRegularKey</button>
                         </form>
                     </div>
-                    
+
                 </div>
             </>)}
         </>

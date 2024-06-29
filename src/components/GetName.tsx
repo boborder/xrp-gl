@@ -39,7 +39,7 @@ export const GetName = () => {
             setClear(false)
         }
 
-        const client = new Client(user.networkEndpoint || "wss://xrplcluster.com");
+        const client = new Client(user?.networkEndpoint || "wss://xrplcluster.com");
         await client.connect();
         const info: AccountInfoResponse = await client.request({
             command: "account_info",
@@ -70,7 +70,7 @@ export const GetName = () => {
             }
         }
 
-        if (clear === true && account === user.account) {
+        if (clear === true && account === user?.account) {
             const put = await fetch(`/api/${account}`, {
                 method: "PUT",
                 headers: {
@@ -110,8 +110,9 @@ export const GetName = () => {
                     <button className="text-gl btn btn-primary join-item">GetName</button>
                 </form>
                 {message && (<label className='label-text'>{message}</label>)}
+
             </div>
-            {clear && (<Payment />)}
+            {clear && (<Payment name={name} />)}
         </>
     )
 }

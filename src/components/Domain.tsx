@@ -3,6 +3,7 @@
 import { checkDomain, checkToml } from "@/actions/domain";
 import { useState } from "react";
 import { convertHexToString } from "xrpl";
+import { useUser } from "./UserProvider";
 interface TomlResponse {
     account: Array<{
         address: string;
@@ -15,6 +16,7 @@ export const Domain = () => {
     const [domain, setDomain] = useState<string | undefined>(undefined);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
+    const { user } = useUser();
 
     const checkToml = async (event: React.FormEvent<HTMLFormElement>) => {
         setLoading(true);
@@ -54,7 +56,7 @@ export const Domain = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ account: address })
+                body: JSON.stringify({ account: address, network: user?.networkEndpoint ? user.networkEndpoint : "wss://xrplcluster.com" })
             });
 
             const data: any = await response.json();

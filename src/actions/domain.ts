@@ -2,14 +2,11 @@
 
 export const runtime = "edge";
 
-const host = "http://127.0.0.1:3000"
-// const host = "https://xrp.gl"
-
 export const checkToml = async (formData: FormData) => {
   try {
     const domain = formData.get("domain");
 
-    const response = await fetch(`${host}/api/toml`, {
+    const response = await fetch(`${process.env.API}/toml`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -27,7 +24,7 @@ export const checkToml = async (formData: FormData) => {
 export const checkDomain = async (formData: FormData) => {
   try {
     const address = formData.get("address");
-    const response = await fetch(`${host}/api/info`, {
+    const response = await fetch(`${process.env.API}/info`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

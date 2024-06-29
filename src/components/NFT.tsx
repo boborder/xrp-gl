@@ -22,15 +22,15 @@ export const NFT = () => {
     // XRPLからNFT情報を取得
     useEffect(() => {
         setup();
-    }, [user.account]);
+    }, [user?.account]);
 
     useEffect(() => {
         fetchAllConvertedURIs();
     }, [info]);
 
     const setup = async () => {
-        if (user.account) {
-            const network = user.networkEndpoint
+        if (user?.account) {
+            const network = user?.networkEndpoint
             const client = new Client(network!)
             await client.connect()
             const info: AccountNFTsResponse = await client.request({
@@ -103,17 +103,18 @@ export const NFT = () => {
         if (uuid) {
             const checkPayloadStatus = setInterval(async () => {
                 const status = await xumm.payload?.get(uuid);
+                setTx(status);
                 if (status?.meta.resolved) {
                     clearInterval(checkPayloadStatus);
                     setTx(status);
                     setData(status.payload)
                     setQr(undefined);
                     if (status.meta.signed === true) {
-                    const client = new Client(user.networkEndpoint!);
+                    const client = new Client(user?.networkEndpoint!);
                     await client.connect();
                     const tx: AccountTxResponse = await client.request({
                         command: "account_tx",
-                        account: user.account!,
+                        account: user?.account!,
                         ledger_index_max: -1,
                         limit: 1,
                         tx_type: "NFTokenMint",
@@ -170,7 +171,7 @@ export const NFT = () => {
     };
     return (
         <>
-            {user.account && (
+            {user?.account && (
                 <div className='stats stats-vertical'>
                     {fetchedData && fetchedData.map((data: any, index: any) => (
                         <div className='stat' key={index}>
@@ -230,6 +231,7 @@ export const NFT = () => {
                     ) : (
                         <>
                             <div className="stat my-3">
+                                <label className="collapse-title text-xl">NFTokenMint</label>
                                 <form className="join join-vertical">
                                     <input
                                         type="file"

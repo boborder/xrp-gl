@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-type ImagineProps = {
+type ImagProps = {
     src: string;
     alt: string;
     width?: number;
@@ -19,7 +19,7 @@ type ImageLoaderProps = {
     quality?: number;
 };
 
-export const Imag: React.FC<ImagineProps> = ({
+export const Imag: React.FC<ImagProps> = ({
     src,
     alt,
     width,

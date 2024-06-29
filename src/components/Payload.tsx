@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { createPayload } from "@/lib/payload";
 
 export const Payload = () => {
-  const { xumm, user, info } = useUser();
+  const { xumm, user, account } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
   const router = useRouter()
@@ -16,6 +16,7 @@ export const Payload = () => {
     if (uuid) {
       const checkPayloadStatus = setInterval(async () => {
         const status = await xumm.payload?.get(uuid);
+        setTx(status);
         if (status?.meta.resolved) {
           clearInterval(checkPayloadStatus);
           setTx(status);
@@ -38,18 +39,18 @@ export const Payload = () => {
 
   const Signin = async () => {
     await xumm.authorize();
-    window.location.reload()
-    router.push(`/profile/${user.account || "user"}`)
+    // window.location.reload()
+    router.push(`/profile/${user?.account || "user"}`)
   };
 
   const logout = async () => {
     await xumm.logout();
-    window.location.reload()
     router.push("/")
+    window.location.reload()
   };
   return (
     <>
-      {user.account ? (
+      {user?.account ? (
         <>
           {qr || tx ? (
             <>
@@ -73,7 +74,7 @@ export const Payload = () => {
                     </summary>
                     <div className="collapse-content text-left">
                       <pre className="text-success text-xs overflow-scroll">
-                        payload: {JSON.stringify(tx.payload, null, 2)}
+                        {JSON.stringify(tx, null, 2)}
                       </pre>
                     </div>
                   </details>
@@ -94,14 +95,14 @@ export const Payload = () => {
                   />
                 </button>
 
-                {info && (
+                {account?.info && (
                   <details className="my-3 collapse collapse-arrow border border-primary bg-base-100">
                     <summary className="collapse-title text-accent text-xl">
                       Account Info
                     </summary>
                     <div className="collapse-content text-left">
                       <pre className="text-success text-xs overflow-scroll">
-                        {JSON.stringify(info, null, 2)}
+                        {JSON.stringify(account.info.result, null, 2)}
                       </pre>
                     </div>
                   </details>

@@ -12,3 +12,21 @@ services:
     restart: always
     tty: true
     command: sh -c "bun dev"
+    networks:
+      - app-network
+
+  cloudflared:
+    image: cloudflare/cloudflared
+    container_name: cloudflared
+    restart: unless-stopped
+    volumes:
+    - ./cloudflared:/home/nonroot/.cloudflared
+    command: tunnel --url http://xrpgl:3000 --no-autoupdate
+    networks:
+      - app-network
+    depends_on:
+      - xrpgl
+
+networks:
+  app-network:
+    driver: bridge

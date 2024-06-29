@@ -6,7 +6,7 @@
 
 ```bash
 
-gh repo clone boborder/xrp-gl
+git clone boborder/xrp-gl
 cd xrp-gl
 
 ```

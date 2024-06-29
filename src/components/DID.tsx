@@ -9,7 +9,7 @@ import { hash } from '../lib/hash';
 import { useRouter } from "next/navigation";
 
 export const DID = (profile?: any) => {
-  const { xumm, user } = useUser();
+  const { xumm, user, account } = useUser();
   const [qr, setQr] = useState<string | undefined>(undefined);
   const [tx, setTx] = useState<any | undefined>(undefined);
   const [data, setData] = useState<any | undefined>(undefined);
@@ -20,6 +20,7 @@ export const DID = (profile?: any) => {
     if (uuid) {
       const checkPayloadStatus = setInterval(async () => {
         const status = await xumm.payload?.get(uuid);
+        setTx(status);
         if (status?.meta.resolved) {
           clearInterval(checkPayloadStatus);
           setTx(status);
@@ -27,11 +28,11 @@ export const DID = (profile?: any) => {
           setQr(undefined);
           if (status.meta.signed === true) {
 
-            const client = new Client(user.networkEndpoint!);
+            const client = new Client(user?.networkEndpoint!);
             await client.connect();
             const tx: AccountTxResponse = await client.request({
               command: "account_tx",
-              account: user.account!,
+              account: user?.account!,
               ledger_index_max: -1,
               limit: 1,
             });
@@ -42,12 +43,12 @@ export const DID = (profile?: any) => {
             }
             await client.disconnect()
 
-            const put = await fetch(`/api/${user.account}`, {
+            const put = await fetch(`/api/${user?.account}`, {
               method: "PUT",
               headers: {
                 "Authorization": `Bearer ${process.env.TOKEN}`,
               },
-              body: JSON.stringify({ did: ("did:xrpl:0" + user.account) })
+              body: JSON.stringify({ did: ("did:xrpl:2:" + user?.account) })
             })
             if (put.status === 200) {
               const data = await put.json()
@@ -59,9 +60,10 @@ export const DID = (profile?: any) => {
                   setData[typedKey] = undefined;
                 }
               });
-              await xumm.userstore?.set(await hash(user.account), data.result)
+              await xumm.userstore?.set(await hash(user?.account), data.result)
             }
             // window.location.reload()
+            // router.replace(`/profile/user`)
             router.refresh()
           }
         }
@@ -84,7 +86,7 @@ export const DID = (profile?: any) => {
   };
 
   const didSet = async () => {
-    const id = `did:xrpl:0:${user.account}`;
+    const id = `did:xrpl:0:${user?.account}`;
     const document = {
       "@context": "https://www.w3.org/ns/did/v1",
       "id": id,
@@ -92,7 +94,7 @@ export const DID = (profile?: any) => {
         "id": id,
         "type": "Secp256k1VerificationKey2018",
         "controller": id,
-        "publicKeyHex": convertStringToHex(id)
+        "publicKeyHex": account?.tx![0]?.tx?.SigningPubKey!
       }],
       "assertionMethod": [id],
       "authentication": [id]
@@ -134,7 +136,7 @@ export const DID = (profile?: any) => {
 
   return (
     <>
-      {user.account && (
+      {user?.account && (
         <>
           {duc && (
             <div className="stat">
@@ -145,6 +147,20 @@ export const DID = (profile?: any) => {
                 <div className="collapse-content text-left">
                   <pre className="text-success text-xs overflow-scroll">
                     {duc}
+                  </pre>
+                </div>
+              </details>
+            </div>
+          )}
+          {profile && (
+            <div className="stat">
+              <details className="collapse collapse-arrow border border-primary bg-base-100">
+                <summary className="collapse-title text-accent text-xl">
+                  profile.json
+                </summary>
+                <div className="collapse-content text-left">
+                  <pre className="text-success text-xs overflow-scroll">
+                    {JSON.stringify(profile, null, 2)}
                   </pre>
                 </div>
               </details>

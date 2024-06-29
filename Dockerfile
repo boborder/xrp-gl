@@ -2,8 +2,8 @@ FROM node:slim
 
 WORKDIR /xrpgl
 
-RUN npm install -g bun \
-    && npm install create-next-app \
+RUN npm install -g bun@latest \
+    && npm install create-next-app@latest \
     && npm install \
     && npm upgrade
 

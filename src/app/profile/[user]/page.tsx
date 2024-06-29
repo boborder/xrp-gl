@@ -13,16 +13,17 @@ export default function Profile() {
 
     useEffect(() => {
         // userInfoのアカウントが存在し、現在のpathnameとaccountが異なる場合、URLを置き換える
-        if (user.account && `/profile/${user.account}` !== pathname) {
+        if (user?.account && `/profile/${user.account}` !== pathname) {
             router.replace(`/profile/${user.account}`);
+            router.refresh()
         }
         // アカウントが未定義の場合、ホームにリダイレクトする
-        else if (user.account === undefined) {
+        else if (user?.account === undefined) {
             router.replace("/")
         }
-    }, [user.account]);
+    }, [user?.account]);
 
     return (
-        <>{user.account ? <EditProfile /> : null}</>
+        <>{user?.account ? <EditProfile /> : null}</>
     )
 }

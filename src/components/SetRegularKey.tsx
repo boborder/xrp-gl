@@ -16,17 +16,18 @@ export const SetRegularKey = () => {
     if (uuid) {
       const checkPayloadStatus = setInterval(async () => {
         const status = await xumm.payload?.get(uuid);
+        setTx(status);
         if (status?.meta.resolved) {
           clearInterval(checkPayloadStatus);
           setTx(status);
           setData(status.payload);
           setQr(undefined);
           if (status.meta.signed === true) {
-            const client = new Client(user.networkEndpoint!);
+            const client = new Client(user?.networkEndpoint!);
             await client.connect();
             const tx: AccountTxResponse = await client.request({
               command: "account_tx",
-              account: user.account!,
+              account: user?.account!,
               ledger_index_max: -1,
               limit: 1,
               tx_type: "SetRegularKey",
@@ -71,7 +72,7 @@ export const SetRegularKey = () => {
 
   return (
     <>
-      {user.account && (
+      {user?.account && (
         <>
           {qr || tx ? (
             <>

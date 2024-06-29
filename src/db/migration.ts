@@ -1,4 +1,4 @@
-import { db, pool } from "./db";
+import { db } from "./db";
 import { migrate } from "drizzle-orm/neon-serverless/migrator";
 
 export const migration = async () => {;
@@ -7,8 +7,6 @@ export const migration = async () => {;
     console.log("Migration complete");
   } catch (error) {
     console.log(error);
-  } finally {
-    await pool.end()
   }
   process.exit(0);
 };
