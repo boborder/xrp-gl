@@ -21,7 +21,7 @@ export default function Profile() {
         else if (user?.account === undefined) {
             router.replace("/")
         }
-    }, [user?.account]);
+    }, [user?.account, pathname, router]);
 
     return (
         <>{user?.account ? <EditProfile /> : null}</>

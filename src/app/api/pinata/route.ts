@@ -5,8 +5,9 @@ const app = new Hono().basePath("/api/pinata");
 
 app.post("/", async (c) => {
   const data = await c.req.formData();
+  // const body = await c.req.parseBody();
+  // const file = body["file"] as File;
   const file: File | null = data.get("file") as unknown as File;
-  data.append("file", file);
   data.append("pinataMetadata", JSON.stringify({ name: file.name }));
   data.append("pinataOptions", JSON.stringify({ cidVersion: 1 }));
   try {

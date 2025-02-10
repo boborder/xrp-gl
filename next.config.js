@@ -15,9 +15,10 @@ module.exports = {
     API: process.env.API,
   },
   async rewrites() {
-    const gateway = "https://ipfs.io/ipfs/";
-    const cid = "bafybeig3w3pnokgbxt55hcz5yv6o7b6calyjjfbl22qwnzpdjdzmzvj6xa";
-    const ipfs = gateway + cid;
+    // const gateway = "https://ipfs.io/ipfs/";
+    // const cid = "bafybeig3w3pnokgbxt55hcz5yv6o7b6calyjjfbl22qwnzpdjdzmzvj6xa";
+    // const ipfs = gateway + cid;
+    const ipfs = "https://bob.bloclaat.com";
     return [
       {
         source: "/ipfs/:file*",

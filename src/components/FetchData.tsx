@@ -1,5 +1,5 @@
 'use client'
-import { Client, FeeResponse } from "xrpl";
+import { Client, type FeeResponse } from "xrpl";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
 import { Donate } from "./Donate";

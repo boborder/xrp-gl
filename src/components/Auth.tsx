@@ -30,21 +30,22 @@ export const Auth = () => {
 
     return (
         user?.account ? (
-            <nav className="dropdown dropdown-end dropdown-hover">
-                <button tabIndex={0} className="btn btn-ghost btn-circle avatar">
-                    <div className='round-full w-12'>
+            <nav className="dropdown dropdown-end dropdown-hover h-12">
+                <button tabIndex={0} className="btn-ghost btn-circle avatar">
+                    <div className='rounded-full w-12'>
+                    {/* <div className='w-12'> */}
                         <Imag
                             priority={true}
                             src={store?.avatar || gravatar || user.picture || "/ipfs/avatar.png"}
                             alt="avatar"
-                            width={50} height={50}
+                            width={48} height={48}
                         />
                     </div>
                 </button>
-                <ul tabIndex={0} className="p-2 z-10 shadow menu menu-md dropdown-content bg-base-100 rounded-box w-auto bg-opacity-90">
+                <ul tabIndex={0} className="dropdown-content rounded-box">
                     <li>
                         <Link href="/">
-                            <button className="btn btn-xs hover:text-primary">
+                            <button className="btn-xs">
                                 Home
                             </button>
                             <span className="badge">🏠</span>
@@ -52,7 +53,7 @@ export const Auth = () => {
                     </li>
                     <li>
                         <Link href={`/profile/${user.account || "user"}`}>
-                            <button className="btn btn-xs hover:text-primary">Profile</button>
+                            <button className="btn-xs">Profile</button>
                             <span className="badge">🏴‍☠️</span>
                         </Link>
                     </li>
@@ -64,32 +65,32 @@ export const Auth = () => {
                     </li> */}
                     <li>
                         <Link href="/">
-                            <button className="btn btn-xs hover:text-primary">About</button>
+                            <button className="btn-xs">About</button>
                             <span className="badge">📚</span>
                         </Link>
                     </li>
                     <li>
                         <a onMouseDown={logout}>
-                            <button className="btn btn-xs hover:text-primary" >Logout</button>
+                            <button className="btn-xs">Logout</button>
                             <span className="badge">bye...</span>
                         </a>
                     </li>
                 </ul>
             </nav>
         ) : (
-            <nav className="dropdown dropdown-end dropdown-hover">
-                <button tabIndex={0} onClick={connect} className="btn btn-ghost">
+            <nav className="dropdown dropdown-end dropdown-hover h-12">
+                <button tabIndex={0} onClick={connect} className="btn-ghost px-1">
                     <Imag
                         src={"/ipfs/xumm-icon.png"}
                         width={100}
-                        height={50}
+                        height={48}
                         alt="sign"
                     />
                 </button>
-                <ul tabIndex={0} className="p-2 z-10 shadow menu menu-md dropdown-content bg-base-100 rounded-box w-auto bg-opacity-90">
+                <ul tabIndex={0} className="dropdown-content rounded-box">
                     <li>
                         <Link href="/">
-                            <button className="btn btn-xs hover:text-primary">Home</button>
+                            <button className="btn-xs">Home</button>
                         </Link>
                     </li>
                     {/* <li>
@@ -100,13 +101,13 @@ export const Auth = () => {
                     </li> */}
                     <li>
                         <Link href="/">
-                            <button className="btn btn-xs hover:text-primary">About</button>
+                            <button className="btn-xs">About</button>
                             <span className="badge">📚</span>
                         </Link>
                     </li>
                     <li>
                         <a onMouseDown={connect}>
-                            <button className="btn btn-xs hover:text-primary" >Connect</button>
+                            <button className="btn-xs">Connect</button>
                             <span className="badge">🔑</span>
                         </a>
                     </li>

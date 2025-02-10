@@ -11,16 +11,24 @@ const push = async (payload: any) => {
 };
 
 export const createPayload = async (Transaction: any) => {
-  const xumm = new Xumm(process.env.XUMMAPI!);
-  const payload = await xumm.payload?.create({
-    ...Transaction,
-    Fee: 123,
-  });
-  if (payload) {
-    await xumm.xapp?.openSignRequest(payload);
-    push(payload);
-    const qr = payload.refs.qr_png;
-    const uuid = payload.uuid;
-    return {qr, uuid};
-  }
+  const apiKey = process.env.XUMMAPI;
+		if (!apiKey) {
+			throw new Error("XUMMAPI environment variable is not set.");
+		}
+		const xumm = new Xumm(apiKey);
+
+		const payload = await xumm.payload?.create({
+			...Transaction,
+			Fee: 123,
+		});
+		if (payload) {
+			if (xumm.xapp) {
+				await xumm.xapp?.openSignRequest(payload);
+			} else {
+				push(payload);
+			}
+			const qr = payload.refs.qr_png;
+			const uuid = payload.uuid;
+			return { qr, uuid };
+		}
 };

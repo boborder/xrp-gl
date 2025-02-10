@@ -10,15 +10,18 @@ export default function App() {
   return (
     <>
       <FetchData />
-      <div className="stats stats-vertical sm:stats-horizontal w-full">
+
+      <div className="responsive">
         <AccountSet />
         <SetRegularKey/>
       </div>
-      <div className="stats stats-vertical sm:stats-horizontal w-full">
+
+      <div className="responsive">
         <Payload />
         <GetName />
       </div>
-      <div className="stats stats-vertical sm:stats-horizontal w-full">
+
+      <div className="responsive">
         <Domain />
         <Vanity />
       </div>

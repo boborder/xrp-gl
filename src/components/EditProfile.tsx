@@ -1,7 +1,9 @@
 "use client"
 import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+
 import AvatarEditor from 'react-avatar-editor';
+
 import { Imag } from "@/components/Imag"
 import { UserProfile, useUser } from "@/components/UserProvider"
 import { DID } from './DID';
@@ -318,7 +320,7 @@ export const EditProfile = () => {
                     </div> */}
 
                     <div
-                        onClick={() => { (window as any).my_modal_2.showModal(); }}
+                        onClick={() => { (window as any).avatar_modal.showModal(); }}
                         className='avatar w-64 mx-auto my-3 p-3'>
                         <Imag
                             priority={true}
@@ -336,7 +338,7 @@ export const EditProfile = () => {
                             {user?.account}
                         </div>
                         <button
-                            className="btn-xs hover:bg-accent w-26 cursor-copy"
+                            className="btn-xs hover:bg-accent w-26 btn-ghost cursor-copy"
                             onClick={() => {
                                 const content = document.getElementById('account')?.textContent;
                                 if (content) { copyToClickBoard(content); }
@@ -415,9 +417,9 @@ export const EditProfile = () => {
                 </>
             )}
             {/* アバター編集モーダル */}
-            <dialog id="my_modal_2" className="modal">
-                <form method="dialog" className="modal-box">
-                    <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+            <dialog id="avatar_modal" className="modal modal-bottom sm:modal-middle">
+                <form method="dialog" className="modal-box flex flex-col items-center bg-base-100">
+                    <button className="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 text-2xl">✕</button>
 
                     <h2 className="font-bold text-3xl">Edit Avatar</h2>
 
@@ -447,16 +449,16 @@ export const EditProfile = () => {
                     <input
                         type="file"
                         onChange={handleImageUpload}
-                        className="file-input file-input-ghost w-[90%] my-3"
+                        className="file-input file-input-ghost w-[80%] my-3"
                     />
                     <button
                         onClick={handleSaveAvatar}
-                        className="btn btn-primary w-[90%]">
+                        className="w-[90%]">
                         Save Avatar
                     </button>
                 </form>
                 <form method="dialog" className="modal-backdrop">
-                    <button>Close</button>
+                    <input type="submit" value="Close"/>
                 </form>
             </dialog>
 

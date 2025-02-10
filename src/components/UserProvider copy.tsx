@@ -5,9 +5,14 @@ import { Xumm } from "xumm";
 import sdk from '@crossmarkio/sdk';
 import { hash } from '@/lib/hash';
 import { dig } from "@/lib/dig";
-import { AccountInfoResponse, AccountObject, AccountTxTransaction } from "xrpl";
+import type { AccountInfoResponse, AccountObject, AccountTxTransaction } from "xrpl";
 
-const xumm = new Xumm(process.env.XUMMAPI!, process.env.XUMMSECRET!);
+const apiKey = process.env.API
+const secret = process.env.SECRET
+if (!apiKey || !secret) {
+  throw new Error("API or SECRET is not set")
+}
+const xumm = new Xumm(apiKey, secret);
 
 type UserType = {
   account?: string;
@@ -69,9 +74,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [gravatar, setGravatar] = useState<string>();
 
   useEffect(() => {
-    if (xumm.user) {
-      getUser()
-    }
+    getUser()
   }, [xumm.user]);
 
   const getUser = async () => {
@@ -93,6 +96,10 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     };
     setUser(userData);
 
+    if (userData.account === undefined) {
+      console.log("userData.account is undefined")
+      return
+    }
     //初回ログイン時にuserstoreに追加
     const id = await hash(userData.account)
     const getStore = await xumm.userstore?.get(id)
@@ -121,15 +128,18 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const ws = `${userData.networkEndpoint || "wss://xrplcluster.com"}`
-    const data = await dig(userData.account!, ws)
+    const data = await dig(userData.account, ws)
     // console.log(data)
     if (data) {
       setInfo(data.info)
       setTx(data.tx)
       setObj(data.obj)
       const gravatar = data.info.result.account_data.EmailHash;
-      if (gravatar) setGravatar(`https://gravatar.com/avatar/${gravatar.toLowerCase()}?s=256`)
+      if (gravatar) {
+        setGravatar(`https://gravatar.com/avatar/${gravatar.toLowerCase()}?s=256`)
+      }
     }
+
     const rpc = await fetch("/api/info", {
       method: "POST",
       headers: {
@@ -140,7 +150,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     // console.log(await rpc.json())
   }
   return (
-    <UserContext.Provider value={{ user, xumm, store, account: { info, tx, obj }, gravatar }}>
+    <UserContext.Provider value={
+      {
+        user,
+        xumm,
+        store,
+        account: { info, tx, obj },
+        gravatar
+      }
+    }>
       {children}
     </UserContext.Provider>
   )

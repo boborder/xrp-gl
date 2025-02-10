@@ -1,16 +1,24 @@
+import { Header } from "@/components/Header"
+import { Sidebar } from "@/components/Sidebar"
 import { Nav } from "@/components/Nav"
-import { Bnav } from "@/components/Bnav"
+import { Footer } from "@/components/Footer"
+import { Btm } from "@/components/Btm"
+import { Alert } from "@/components/Alert"
 
 export default function template({ children, }: { children: React.ReactNode }) {
     return (
         <>
-            <Nav />
-            <main className="py-16 px-2 mx-auto container text-center text-primary-content">
-                <div className='card border-primary border-2'>
+            <Header />
+            <Sidebar />
+            <main>
+                <Nav/>
+                <div className='content'>
                     {children}
+                    <Alert />
                 </div>
             </main>
-            <Bnav />
+            <Footer />
+            <Btm />
         </>
     )
 }

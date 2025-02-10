@@ -10,8 +10,8 @@ export const Test = () => {
     const [raw, setRaw] = useState<TxResponse | undefined>(undefined);
     const [info, setInfo] = useState<AccountInfoResponse | undefined>(undefined);
 
-    const ws = "wss://s.devnet.rippletest.net:51233"
-    // const ws = "wss://testnet.xrpl-labs.com"
+    // const ws = "wss://s.devnet.rippletest.net:51233"
+    const ws = "wss://testnet.xrpl-labs.com"
 
     useEffect(() => {
         createAccount();

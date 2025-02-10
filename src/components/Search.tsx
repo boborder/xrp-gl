@@ -1,3 +1,4 @@
+"use client"
 
 export const Search = () => {
     const search = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -15,8 +16,7 @@ export const Search = () => {
     }
 
     return (
-        <form onSubmit={search} className="form-control min-w-48">
-            <div className="join">
+        <form onSubmit={search} className="min-w-48 join join-horizontal">
                 <input
                     type="text"
                     id="query"
@@ -24,8 +24,7 @@ export const Search = () => {
                     placeholder="Search"
                     className="input input-bordered join-item w-full"
                 />
-                <button type="submit" className="btn join-item btn-neutral">🔍</button>
-            </div>
+                <button type="submit" className="join-item btn-neutral">🔍</button>
         </form>
     );
 }
