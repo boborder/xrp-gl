@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useUser } from "@/components/UserProvider";
 import { Imag } from "./Imag";
 import { createPayload } from "@/lib/payload";
-import { AccountTxResponse, Client } from 'xrpl';
+import { type AccountTxResponse, Client } from 'xrpl';
 
 export const SetRegularKey = () => {
   const { xumm, user } = useUser();

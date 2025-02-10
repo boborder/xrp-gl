@@ -84,18 +84,15 @@ export const Payload = () => {
 						) : (
 							<>
 								<div className="stat">
-									<div className="text-accent text-xl">Sign</div>
-									<button
-										onClick={payload}
-										className="btn-ghost mx-auto min-w-56 my-3"
-									>
-										<Imag
+									<div className="stat-title">Sign</div>
+									<Imag
 											src={'/ipfs/sign-in-with-xumm.png'}
 											width={256}
 											height={64}
 											alt="sign"
+                      onClick={payload}
+                      className="my-3"
 										/>
-									</button>
 
 									{account?.info && (
 										<details className="collapse collapse-arrow my-3 border border-accent overflow-auto">
@@ -110,9 +107,9 @@ export const Payload = () => {
 										</details>
 									)}
 
-									<div className="text-accent text-xl">Logout</div>
+									<div className="stat-title">Logout</div>
 									<button
-										className="text-xl btn btn-primary mx-auto min-w-52 my-3"
+										className="min-w-52 my-3"
 										onClick={logout}
 									>
 										logout
@@ -123,15 +120,15 @@ export const Payload = () => {
 					</>
 				) : (
 					<div className="stat">
-						<div className="text-accent text-xl">Sign In</div>
-						<div onClick={Signin} className="mx-auto min-w-56 my-3">
-							<Imag
-								src={'/ipfs/sign-in-with-xumm.png'}
-								width={360}
-								height={100}
-								alt="sign"
+						<div className="stat-title">Sign In</div>
+						<Imag
+							src={'/ipfs/sign-in-with-xumm.png'}
+							width={360}
+							height={100}
+							alt="sign"
+							onClick={Signin}
+							className="my-3"
 							/>
-						</div>
 					</div>
 				)}
 			</>

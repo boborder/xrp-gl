@@ -5,17 +5,17 @@ import { Xumm } from "xumm";
 
 const apiKey = process.env.XUMMAPI;
 const secret = process.env.XUMMSECRET;
-if (!apiKey || !secret) {
-  throw new Error("API or SECRET is not set");
+if (!apiKey) {
+  throw new Error("API is not set");
 }
 const xumm = new Xumm(apiKey, secret);
 
 export const getData = async () => {
-  await sdk.sync.connect();
-  if (!sdk.sync.isConnected) {
-    console.log(sdk.sync.signIn());
-  }
-  console.log(sdk.session);
+  // await sdk.sync.connect();
+  // if (!sdk.sync.isConnected) {
+    // console.log(sdk.sync.signIn());
+  // }
+  // console.log(sdk.session);
 
   const user = xumm.user;
   const userData = {
@@ -46,17 +46,17 @@ export const getData = async () => {
     await xumm.userstore?.set(id, { account: userData.account });
   }
 
-  if (getAccount) {
-    const profile = await getAccount.json();
-    if (profile === "{}" || !profile.result) {
-      await fetch(`/api/${userData.account}`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${process.env.TOKEN}`,
-        }
-      });
-    }
-  }
+  // if (getAccount) {
+  //   const profile = await getAccount.json();
+  //   if (profile === "{}" || !profile.result) {
+  //     await fetch(`/api/${userData.account}`, {
+  //       method: "GET",
+  //       headers: {
+  //         "Authorization": `Bearer ${process.env.TOKEN}`,
+  //       }
+  //     });
+  //   }
+  // }
 
   const gravatar = getData?.info.result.account_data.EmailHash;
 

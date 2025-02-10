@@ -8,8 +8,8 @@ import type { AccountInfoResponse, AccountObject, AccountTxTransaction } from "x
 
 const apiKey = process.env.XUMMAPI;
 const secret = process.env.XUMMSECRET;
-if (!apiKey || !secret) {
-	throw new Error("API or SECRET is not set");
+if (!apiKey) {
+	throw new Error("API is not set");
 }
 const xumm = new Xumm(apiKey, secret);
 
@@ -66,25 +66,23 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
-  const { data, mutate } = useSWR('user', getData);
-
-  // useEffect(() => {
-  //   if (data) {
-  //     mutate();
-  //   }
-  // }, [data, mutate]);
+  const { data, mutate } = useSWR(xumm ? 'user' : null, getData);
+  useEffect(() => {
+    mutate();
+  }, [data, mutate]);
 
   return (
-    <UserContext.Provider value={
+    <UserContext value={
       {
         xumm,
         user: data?.userData,
         store: data?.store,
         account: data?.account,
         gravatar: data?.gravatar
-      }}>
+      }
+    }>
       {children}
-    </UserContext.Provider>
+    </UserContext>
   );
 };
 

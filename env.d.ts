@@ -7,6 +7,3 @@ declare global {
     }
   }
 }
-
-interface CloudflareEnv {
-}

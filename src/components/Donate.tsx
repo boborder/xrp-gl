@@ -100,15 +100,15 @@ export const Donate = () => {
             </>
           ) : (
             <div className="stat">
-              <div className="text-accent text-xl">Donate</div>
-              <button onClick={donate} className="btn-ghost mx-auto my-3">
-                <Imag
-                  src={"/ipfs/donate-with-xumm.png"}
-                  width={240}
-                  height={100}
-                  alt="sign"
+              <div className="stat-title">Donate</div>
+              <Imag
+                src={"/ipfs/donate-with-xumm.png"}
+                width={240}
+                height={100}
+                alt="sign"
+                onClick={donate}
+                  className="my-3"
                 />
-              </button>
             </div>
           )}
         </>

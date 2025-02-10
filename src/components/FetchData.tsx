@@ -34,10 +34,12 @@ const useXRPData = (user: any, xumm: any) => {
 export const FetchData = () => {
     const { xumm, user } = useUser();
     const { feeData, balanceData, priceJPY, priceUSD, ws } = useXRPData(user, xumm);
+    // const { data } = useSWR(xumm ? 'user' : null);
+    // console.log(data?.userData);
 
     return (
         <>
-            <div className="stats stats-vertical sm:stats-horizontal">
+            <div className="responsive">
                 <div className="stat">
                     <div className="stat-title">LedgerIndex</div>
                     <div className="stat-value">
@@ -51,8 +53,9 @@ export const FetchData = () => {
                 </div>
                 <Donate />
             </div>
+
             {user?.account && (
-                <div className="stats stats-vertical sm:stats-horizontal">
+                <div className="responsive">
                     <div className="stat">
                         <div className="stat-title">XRP Price</div>
                         <div className="stat-value">

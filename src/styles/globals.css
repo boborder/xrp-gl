@@ -3,61 +3,55 @@
 @tailwind utilities;
 
 .responsive {
-  @apply
-  stats
+  @apply stats
   stats-vertical
   sm:stats-horizontal
-  /* w-full */
+  /* w-full */;
 }
 
 .cards {
-  @apply
-  card
+  @apply card
   card-bordered
-  card-compact
+  card-compact;
 }
 
 body {
-  @apply
-  text-accent
+  @apply text-accent
   drawer
-  lg:drawer-open
+  lg:drawer-open;
 }
 
 main {
-	@apply
-	container
+  @apply container
 	drawer-content
 	pt-16
 	pb-72
 	mx-auto
-	text-accent
+	text-accent;
 }
 
 .content {
-  @apply
-  mx-1
+  @apply mx-1
   p-2
   border-primary
   border-2
   rounded-box
-  text-center
+  text-center;
 }
 
-header { @apply
-  navbar
+header {
+  @apply navbar
   absolute
   z-20
   bg-base-200
   bg-opacity-80
   hover:bg-opacity-100
   active:bg-opacity-100
-  /* lg:pl-64 */
+  /* lg:pl-64 */;
 }
 
 footer {
-  @apply
-  footer
+  @apply footer
   footer-center
   absolute
   p-4
@@ -68,8 +62,7 @@ footer {
 }
 
 .btm {
-  @apply
-  btm-nav
+  @apply btm-nav
   z-20
   bg-base-200
   bg-opacity-80
@@ -104,16 +97,14 @@ h6 {
 }
 
 ul {
-  @apply
-  menu
+  @apply menu
   min-w-44
-  bg-base-200
+  bg-base-200;
 }
 
 li {
-  @apply
-  hover:text-accent
-  active:text-accent
+  @apply hover:text-accent
+  active:text-accent;
 }
 
 .join-form {
@@ -126,14 +117,13 @@ li {
 }
 
 form {
-  @apply
-  form-control
+  @apply form-control
   mx-auto
   max-w-xs;
 }
 .input-text {
   @apply input
-  input-bordered
+  input-bordered;
 }
 
 input[type="file"] {
@@ -141,30 +131,26 @@ input[type="file"] {
   file-input-bordered
   /* join-item */
   text-accent
-  input-ghost
+  input-ghost;
 }
 
 input[type="radio"] {
-  @apply
-  radio
-  radio-primary
+  @apply radio
+  radio-primary;
 }
 
 input[type="select"] {
-  @apply
-  select
-  select-bordered
+  @apply select
+  select-bordered;
 }
 
 input[type="range"] {
-  @apply
-  range
-  range-primary
+  @apply range
+  range-primary;
 }
 
 button {
-  @apply
-  btn
+  @apply btn
   btn-primary
   text-xl
   hover:text-primary
@@ -172,24 +158,21 @@ button {
 }
 
 button[type="submit"] {
-  @apply
-  btn
+  @apply btn
   btn-neutral
   /* join-item */
   text-xl
   hover:bg-zinc-600
-  active:bg-zinc-600
+  active:bg-zinc-600;
 }
 
 a {
-  @apply
-  hover:text-primary
+  @apply hover:text-primary
   active:text-primary;
 }
 
 table {
-  @apply
-  table
+  @apply table
   table-pin-rows
   table-pin-cols;
 }
@@ -205,7 +188,6 @@ pre {
 }
 
 progress {
-  @apply
-  progress
-  progress-primary
+  @apply progress
+  progress-primary;
 }

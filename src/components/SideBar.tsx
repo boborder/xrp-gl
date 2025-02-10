@@ -12,7 +12,7 @@ export const Sidebar = () => {
 						className="drawer-overlay"
 					/>
 
-					<ul className="menu py-4 w-56 text-lg overflow-auto">
+					<ul className="menu py-8 w-56 text-lg overflow-auto">
 						<div className="divider" />
 						<Search />
 						<div className="divider" />
