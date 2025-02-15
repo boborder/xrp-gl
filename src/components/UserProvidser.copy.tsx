@@ -2,17 +2,11 @@
 
 import { useState, useEffect, useContext, createContext } from "react";
 import { Xumm } from "xumm";
-import sdk from '@crossmarkio/sdk';
+// import sdk from '@crossmarkio/sdk';
+
 import { hash } from '@/lib/hash';
 import { dig } from "@/lib/dig";
 import type { AccountInfoResponse, AccountObject, AccountTxTransaction } from "xrpl";
-
-const apiKey = process.env.API
-const secret = process.env.SECRET
-if (!apiKey || !secret) {
-  throw new Error("API or SECRET is not set")
-}
-const xumm = new Xumm(apiKey, secret);
 
 type UserType = {
   account?: string;
@@ -57,7 +51,7 @@ type Account = {
 
 type UserContextType = {
   user: UserType;
-  xumm: typeof xumm;
+  xumm: Xumm;
   store?: UserProfile;
   account: Account;
   gravatar?: string;
@@ -73,15 +67,21 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const [obj, setObj] = useState<AccountObject[]>();
   const [gravatar, setGravatar] = useState<string>();
 
-  useEffect(() => {
-    getUser()
-  }, [xumm.user]);
+  const apiKey = process.env.API;
+	const secret = process.env.SECRET;
+	if (!apiKey) {
+		throw new Error('API is not set');
+	}
+  if (!secret) {
+    console.log('SECRET is not set');
+  }
+	const xumm = secret ? new Xumm(apiKey, secret) : new Xumm(apiKey);
 
   const getUser = async () => {
-    await sdk.sync.connect()
-    if (!sdk.sync.isConnected) {
-      console.log(sdk.sync.signIn())
-    }
+    // await sdk.sync.connect()
+    // if (!sdk.sync.isConnected) {
+    //   console.log(sdk.sync.signIn())
+    // }
     const user = xumm.user
     const userData = {
       account: await user.account,
@@ -134,21 +134,26 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       setInfo(data.info)
       setTx(data.tx)
       setObj(data.obj)
-      const gravatar = data.info.result.account_data.EmailHash;
+      const gravatar = data.info?.result.account_data.EmailHash;
       if (gravatar) {
         setGravatar(`https://gravatar.com/avatar/${gravatar.toLowerCase()}?s=256`)
       }
     }
 
-    const rpc = await fetch("/api/info", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ account: userData.account, network: ws })
-    })
+    // const rpc = await fetch("/api/info", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({ account: userData.account, network: ws })
+    // })
     // console.log(await rpc.json())
   }
+
+	useEffect(() => {
+		getUser();
+	}, [xumm.user]);
+
   return (
     <UserContext.Provider value={
       {

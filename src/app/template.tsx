@@ -1,5 +1,5 @@
 import { Header } from "@/components/Header"
-import { Sidebar } from "@/components/Sidebar"
+import { Sidebar } from "@/components/SideBar"
 import { Nav } from "@/components/Nav"
 import { Footer } from "@/components/Footer"
 import { Btm } from "@/components/Btm"

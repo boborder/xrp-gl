@@ -9,6 +9,7 @@ if (!apiKey) {
   throw new Error("API is not set");
 }
 const xumm = new Xumm(apiKey, secret);
+const user = xumm.user;
 
 export const getData = async () => {
   // await sdk.sync.connect();
@@ -17,7 +18,6 @@ export const getData = async () => {
   // }
   // console.log(sdk.session);
 
-  const user = xumm.user;
   const userData = {
     account: await user.account,
     name: await user.name,
@@ -37,28 +37,34 @@ export const getData = async () => {
 
   const id = await hash(userData.account);
   const ws = `${userData.networkEndpoint || "wss://xrplcluster.com"}`;
+  const getDataPromise = dig(userData.account, ws, 'info', 'obj', 'tx');
+
   const getStorePromise = xumm.userstore?.get(id);
   const getAccountPromise = fetch(`/api/get?account=${userData.account}`, { method: "GET" });
-  const getDataPromise = dig(userData.account, ws, 'info', 'obj', 'tx');
-  const [getStore, getAccount, getData] = await Promise.all([getStorePromise, getAccountPromise, getDataPromise]);
+
+  const [getStore, getAccount, getData] = await Promise.all([
+    getStorePromise,
+    getAccountPromise,
+    getDataPromise
+  ]);
 
   if (!getStore?.account) {
     await xumm.userstore?.set(id, { account: userData.account });
   }
 
-  // if (getAccount) {
-  //   const profile = await getAccount.json();
-  //   if (profile === "{}" || !profile.result) {
-  //     await fetch(`/api/${userData.account}`, {
-  //       method: "GET",
-  //       headers: {
-  //         "Authorization": `Bearer ${process.env.TOKEN}`,
-  //       }
-  //     });
-  //   }
-  // }
+  if (getAccount) {
+    const profile = await getAccount.json();
+    if (profile === "{}" || !profile.result) {
+      await fetch(`/api/${userData.account}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${process.env.TOKEN}`,
+        }
+      });
+    }
+  }
 
-  const gravatar = getData?.info.result.account_data.EmailHash;
+  const gravatar = getData?.info?.result?.account_data?.EmailHash ? `https://gravatar.com/avatar/${getData?.info?.result?.account_data?.EmailHash.toLowerCase()}?s=256` : undefined;
 
   return {
     userData,
@@ -68,6 +74,6 @@ export const getData = async () => {
       tx: getData?.tx,
       obj: getData?.obj
     },
-    gravatar: gravatar ? `https://gravatar.com/avatar/${gravatar.toLowerCase()}?s=256` : undefined
+    gravatar: gravatar
   };
 };

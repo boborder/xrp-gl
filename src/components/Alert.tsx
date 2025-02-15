@@ -1,6 +1,6 @@
 "use client"
 
-import { useStore } from "../app/hooks/useStore";
+import { useStore } from "../hooks/useStore";
 
 export const Alert = () => {
   const [cookie, setCookie] = useStore({
