@@ -5,15 +5,17 @@ import { Meta } from './Meta'
 
 export const metadata = Meta
 
-const fonts = Roboto_Mono({ weight: "400", subsets: ["latin"] });
+const fonts = Roboto_Mono({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+})
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={fonts.className}>
-        <UserProvider>
-          {children}
-        </UserProvider>
+    <html lang='en'>
+      <link rel='manifest' href='/manifest.json' />
+      <body className={`${fonts.className} antialiased`}>
+        <UserProvider>{children}</UserProvider>
       </body>
     </html>
   )

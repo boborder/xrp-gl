@@ -2,7 +2,7 @@
 
 import { Wallet } from "xrpl";
 
-export const runtime = "edge";
+// export const runtime = "edge";
 
 export const vanitySearch = async (formData: FormData) => {
   try {

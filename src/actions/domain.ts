@@ -1,6 +1,6 @@
 "use server"
 
-export const runtime = "edge";
+// export const runtime = "edge";
 
 export const checkToml = async (formData: FormData) => {
   try {

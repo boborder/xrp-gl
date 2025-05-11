@@ -23,4 +23,4 @@ app.post("/", async (c) => {
 });
 export const POST = handle(app);
 
-export const runtime = "edge";
+// export const runtime = "edge";

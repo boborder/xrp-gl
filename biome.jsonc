@@ -1,0 +1,111 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "vcs": { "enabled": false, "clientKind": "git", "useIgnoreFile": false },
+  "files": { "ignoreUnknown": false, "ignore": ["worker-config.d.ts"] },
+  "formatter": {
+    "enabled": true,
+    "useEditorconfig": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 120,
+    "attributePosition": "auto",
+    "bracketSpacing": true,
+    "ignore": [
+      "**/.git",
+      "**/.svn",
+      "**/.hg",
+      "**/node_modules",
+      "**/package-lock.json",
+      "**/bun.lock",
+      "**/.vitepress/cache",
+      "**/.vitepress/dist",
+      "**/.vscode",
+      "**/.idea",
+      "**/.wrangler",
+      "**/.next",
+      "**/.open-next",
+      "**/public"
+    ]
+  },
+  "organizeImports": { "enabled": true },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": false,
+      "complexity": {
+        "noUselessThisAlias": "error",
+        "noUselessTypeConstraint": "error"
+      },
+      "correctness": {
+        "noUnusedVariables": "warn",
+        "useArrayLiterals": "off",
+        "noConstAssign": "off",
+        "noGlobalObjectCalls": "off",
+        "noInvalidBuiltinInstantiation": "off",
+        "noInvalidConstructorSuper": "off",
+        "noNewSymbol": "off",
+        "noSetterReturn": "off",
+        "noUndeclaredVariables": "off",
+        "noUnreachable": "off",
+        "noUnreachableSuper": "off"
+      },
+      "style": {
+        "noNamespace": "warn",
+        "useAsConstAssertion": "warn",
+        "noNonNullAssertion": "off",
+        "useSelfClosingElements": "off",
+        "noArguments": "error",
+        "noVar": "error",
+        "useConst": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noExtraNonNullAssertion": "error",
+        "noMisleadingInstantiator": "error",
+        "noUnsafeDeclarationMerging": "error",
+        "useNamespaceKeyword": "error",
+        "noClassAssign": "off",
+        "noDuplicateClassMembers": "off",
+        "noDuplicateObjectKeys": "off",
+        "noDuplicateParameters": "off",
+        "noFunctionAssign": "off",
+        "noImportAssign": "off",
+        "noRedeclare": "off",
+        "noUnsafeNegation": "off",
+        "useGetterReturn": "off"
+      }
+    },
+    "ignore": []
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "jsxQuoteStyle": "single",
+      "quoteProperties": "asNeeded",
+      "trailingCommas": "all",
+      "semicolons": "asNeeded",
+      "arrowParentheses": "always",
+      "bracketSameLine": false,
+      "bracketSpacing": true,
+      "attributePosition": "auto"
+    }
+  },
+  "json": {
+    "formatter": {
+      "indentStyle": "space",
+      "indentWidth": 2
+    }
+  },
+  "css": {
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2
+    },
+    "linter": {
+      "enabled": false
+    }
+  }
+}

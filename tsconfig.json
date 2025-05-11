@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "types": ["web", "bun-types"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,

@@ -4,7 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "@/components/UserProvider";
 import { EditProfile } from "@/components/EditProfile";
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 export default function Profile() {
     const router = useRouter();
